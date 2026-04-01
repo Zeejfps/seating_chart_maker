@@ -51,13 +51,18 @@
   let assignedExpanded = $state(false);
 
   let flashTableId: string | null = $state(null);
+  let prevSelectedTableId: string | null = null;
 
   $effect(() => {
-    if (selectedTableId) {
+    const id = selectedTableId;
+    if (id && id !== prevSelectedTableId) {
+      prevSelectedTableId = id;
       assignedExpanded = true;
-      expandTable(selectedTableId);
+      expandTable(id);
       flashTableId = null;
-      requestAnimationFrame(() => { flashTableId = selectedTableId; });
+      requestAnimationFrame(() => { flashTableId = id; });
+    } else if (!id) {
+      prevSelectedTableId = null;
     }
   });
 

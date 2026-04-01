@@ -839,9 +839,13 @@ input:focus {
   border-radius: 4px;
 }
 
-.table-subheader.highlight-flash {
-  animation: flash-border 1.5s ease-out;
+.table-subheader.highlight-flash::before {
+  content: "";
+  position: absolute;
+  inset: -4px 8px;
   border-radius: 4px;
+  animation: flash-border 1.5s ease-out;
+  pointer-events: none;
 }
 
 @keyframes flash-border {
