@@ -306,6 +306,7 @@
         type: "guest",
         centreDraggedOnCursor: false,
         dropFromOthersDisabled: false,
+        dragDisabled: !localItems.length,
         flipDurationMs: 150,
         morphDisabled: true,
         dropTargetStyle: {
