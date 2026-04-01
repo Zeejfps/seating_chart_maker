@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { getGuests, getTables, getState, replaceAll } from "./lib/state.svelte";
   import {
     undo,
@@ -27,6 +27,15 @@
   let activeTab: "cards" | "floorplan" = $state("cards");
   let selectedTableId: string | null = $state(null);
   let initialized = $state(false);
+  let floorPlanApi: { panToTable: (tableId: string) => void } | null = $state(null);
+
+  async function handlePanToTable(tableId: string) {
+    if (activeTab !== "floorplan") {
+      activeTab = "floorplan";
+      await tick();
+    }
+    floorPlanApi?.panToTable(tableId);
+  }
 
   // Modal state
   let modalType: string | null = $state(null);
@@ -139,6 +148,7 @@
   {selectedGuestId}
   onselect={(id) => (selectedGuestId = selectedGuestId === id ? null : id)}
   onshowmodal={showModal}
+  onpantotable={handlePanToTable}
 />
 <div class="main-area">
   <div class="view-tabs">
@@ -156,6 +166,7 @@
       onclearselection={() => (selectedGuestId = null)}
       {selectedTableId}
       onselecttable={(id) => (selectedTableId = id)}
+      onready={(api) => (floorPlanApi = api)}
     />
   {/if}
 </div>

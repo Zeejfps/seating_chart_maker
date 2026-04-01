@@ -24,9 +24,10 @@
     onclearselection: () => void;
     selectedTableId: string | null;
     onselecttable: (id: string | null) => void;
+    onready?: (api: { panToTable: (tableId: string) => void }) => void;
   }
 
-  let { selectedGuestId, onclearselection, selectedTableId, onselecttable }: Props = $props();
+  let { selectedGuestId, onclearselection, selectedTableId, onselecttable, onready }: Props = $props();
 
   const CANVAS_W = 3000;
   const CANVAS_H = 2000;
@@ -180,6 +181,19 @@
     }
   }
 
+  // --- Pan to specific table ---
+  function panToTable(tableId: string) {
+    if (!viewportEl) return;
+    const table = getTables().find((t) => t.id === tableId);
+    if (!table) return;
+    const rect = viewportEl.getBoundingClientRect();
+    const targetZoom = Math.max(zoom, 0.8);
+    zoom = targetZoom;
+    panX = rect.width / 2 - table.x * targetZoom;
+    panY = rect.height / 2 - table.y * targetZoom;
+    onselecttable(tableId);
+  }
+
   // --- Fit to view ---
   function fitToView() {
     if (!viewportEl) return;
@@ -285,6 +299,7 @@
     window.addEventListener("mousemove", handleWindowMouseMove);
     window.addEventListener("mouseup", handleWindowMouseUp);
     centerView();
+    onready?.({ panToTable });
     return () => {
       window.removeEventListener("mousemove", handleWindowMouseMove);
       window.removeEventListener("mouseup", handleWindowMouseUp);
@@ -320,7 +335,7 @@
         class:selected={selectedTableId === table.id}
         class:is-dragging={isDragging}
         class:drop-target={!!selectedGuestId}
-        class:has-room={isDndActive() && hasRoom}
+        class:dnd-hover={dndDraggingTable === table.id}
         style="left:{tx}px; top:{ty}px;"
         onmousedown={(e) => handleTableMouseDown(e, table.id)}
         onclick={(e) => handleTableClick(e, table.id)}

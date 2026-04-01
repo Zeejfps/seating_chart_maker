@@ -116,7 +116,7 @@ input:focus {
     "toolbar toolbar"
     "stats stats"
     "sidebar main";
-  min-height: 100svh;
+  height: 100svh;
 }
 
 @media (max-width: 768px) {
@@ -204,9 +204,22 @@ input:focus {
   padding: 4px 8px;
 }
 
-.guest-list {
+.sidebar-scroll {
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
+}
+
+.section-label {
+  padding: 6px 12px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text);
+}
+
+.guest-list {
   padding: 8px;
   min-height: 60px;
 }
@@ -677,9 +690,8 @@ input:focus {
   box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
-.table-circle.drag-over {
+.table-circle.dnd-hover {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-bg);
   background: var(--accent-bg);
 }
 
@@ -691,7 +703,6 @@ input:focus {
 
 .table-circle.has-room {
   border-color: var(--accent-border);
-  box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
 .table-circle-name {
@@ -750,4 +761,93 @@ input:focus {
 .floor-plan-add-btn:hover {
   border-color: var(--accent-border);
   color: var(--accent);
+}
+
+/* Assigned guests section */
+.assigned-section {
+  border-top: 1px solid var(--border);
+}
+
+.section-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  color: var(--text);
+  background: none;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.section-toggle:hover {
+  background: var(--accent-bg);
+}
+
+.toggle-arrow {
+  font-size: 9px;
+  transition: transform 0.15s;
+  display: inline-block;
+}
+
+.toggle-arrow.expanded {
+  transform: rotate(90deg);
+}
+
+.section-count {
+  margin-left: auto;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0 7px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.table-group {
+  margin-bottom: 2px;
+}
+
+.table-subheader {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.table-subheader .table-count {
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--text);
+  opacity: 0.7;
+}
+
+.assigned-guest-list {
+  min-height: 32px;
+  padding: 4px 8px;
+}
+
+.table-badge {
+  font-size: 11px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.6;
+}
+
+.table-badge:hover {
+  background: var(--accent);
+  color: #fff;
 }

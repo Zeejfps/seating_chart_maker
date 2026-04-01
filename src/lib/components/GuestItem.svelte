@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import type { Guest } from "../types";
   import { executeCommand } from "../command-history.svelte";
   import { RenameGuestCommand, RemoveGuestCommand } from "../commands";
@@ -8,9 +9,10 @@
     selectedGuestId: string | null;
     onselect: (id: string) => void;
     showRemove?: boolean;
+    badge?: Snippet;
   }
 
-  let { guest, selectedGuestId, onselect, showRemove = true }: Props = $props();
+  let { guest, selectedGuestId, onselect, showRemove = true, badge }: Props = $props();
 
   let editing = $state(false);
   let editValue = $state("");
@@ -88,6 +90,9 @@
     />
   {:else}
     <span class="guest-name">{guest.name}</span>
+  {/if}
+  {#if badge && !editing}
+    {@render badge()}
   {/if}
   {#if showRemove && !editing}
     <button class="remove-btn" onclick={handleRemove} title="Remove guest">

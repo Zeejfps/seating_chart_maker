@@ -24,6 +24,10 @@ function getUnassignedGuests(): Guest[] {
   return _guests.filter((g) => g.tableId === null);
 }
 
+function getAssignedGuests(): Guest[] {
+  return _guests.filter((g) => g.tableId !== null);
+}
+
 function getGuestsByTable(): Map<string, Guest[]> {
   const map = new Map<string, Guest[]>();
   for (const t of _tables) {
@@ -115,6 +119,7 @@ export {
   getGuests,
   getTables,
   getUnassignedGuests,
+  getAssignedGuests,
   getGuestsByTable,
   updateGuest,
   addGuest,
