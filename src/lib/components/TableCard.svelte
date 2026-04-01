@@ -77,40 +77,16 @@
 
   function transformDraggedElement(el?: HTMLElement) {
     if (!el) return;
-    const name =
-      el.querySelector(".guest-name")?.textContent ?? el.textContent ?? "";
-    const dots = `<span style="
-      display: inline-block;
-      width: 10px; height: 14px;
-      background-image: radial-gradient(circle, currentColor 1.2px, transparent 1.2px);
-      background-size: 5px 5px;
-      opacity: 0.5;
-      flex-shrink: 0;
-      margin-right: 6px;
-    "></span>`;
-    el.innerHTML = `<span style="
-      display: inline-flex;
-      align-items: center;
-      border-radius: 20px;
-      padding: 4px 14px 4px 10px;
-      background: var(--accent-bg);
-      border: 1.5px solid var(--accent-border);
-      color: var(--text-h);
-      font-size: 13px;
-      font-weight: 500;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      white-space: nowrap;
-    ">${dots}${name}</span>`;
-    el.style.cssText += `
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      background: transparent !important;
-      border: none !important;
-      box-shadow: none !important;
-      outline: none !important;
-      padding: 0 !important;
-    `;
+    el.querySelector(".grip-handle")?.remove();
+    el.querySelector(".remove-btn")?.remove();
+    el.style.borderRadius = "20px";
+    el.style.background = "var(--accent-bg)";
+    el.style.border = "1.5px solid var(--accent-border)";
+    el.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+    el.style.justifyContent = "center";
+    el.style.padding = "0 14px";
+    el.style.color = "var(--text-h)";
+    el.style.fontWeight = "500";
   }
 
   function handleDndConsider(e: CustomEvent) {
