@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getUnassignedGuests, getGuests, getGuestsByTable, getTables, setDndActive, isDndActive } from "../state.svelte";
-  import { loadTreeState, isTableExpanded, toggleTable, setSearchExpandedTables } from "../tree-state.svelte";
+  import { loadTreeState, isTableExpanded, toggleTable, expandTable, setSearchExpandedTables } from "../tree-state.svelte";
   import { executeCommand } from "../command-history.svelte";
   import {
     AddGuestCommand,
@@ -16,12 +16,13 @@
 
   interface Props {
     selectedGuestId: string | null;
+    selectedTableId: string | null;
     onselect: (id: string | null) => void;
     onshowmodal: (type: string, data?: unknown) => void;
     onpantotable: (tableId: string) => void;
   }
 
-  let { selectedGuestId, onselect, onshowmodal, onpantotable }: Props = $props();
+  let { selectedGuestId, selectedTableId, onselect, onshowmodal, onpantotable }: Props = $props();
 
   let searchQuery = $state("");
   let addingGuest = $state(false);
@@ -48,6 +49,17 @@
   // --- Assigned guests ---
   loadTreeState();
   let assignedExpanded = $state(false);
+
+  let flashTableId: string | null = $state(null);
+
+  $effect(() => {
+    if (selectedTableId) {
+      assignedExpanded = true;
+      expandTable(selectedTableId);
+      flashTableId = null;
+      requestAnimationFrame(() => { flashTableId = selectedTableId; });
+    }
+  });
 
   let filteredAssignedByTable: { table: Table; guests: Guest[] }[] = $derived.by(() => {
     const tables = getTables();
@@ -350,7 +362,7 @@
             {@const items = localAssignedByTable.get(table.id) ?? []}
             {@const expanded = isTableExpanded(table.id)}
             <div class="table-group">
-              <div class="table-subheader" class:header-drop-highlight={headerDropTable === table.id}>
+              <div class="table-subheader" class:header-drop-highlight={headerDropTable === table.id} class:highlight-flash={flashTableId === table.id}>
                 <button class="table-toggle" onclick={() => toggleTable(table.id)}>
                   <span class="toggle-arrow" class:expanded>&#9654;</span>
                   <span class="table-name">Table {table.name}</span>

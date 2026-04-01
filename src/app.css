@@ -839,6 +839,18 @@ input:focus {
   border-radius: 4px;
 }
 
+.table-subheader.highlight-flash {
+  animation: flash-border 1.5s ease-out;
+  border-radius: 4px;
+}
+
+@keyframes flash-border {
+  0%, 20%, 40% { outline: 2px solid var(--accent-border); background-color: var(--accent-bg); }
+  10%, 30% { outline: 2px solid transparent; background-color: transparent; }
+  50% { outline: 2px solid var(--accent-border); background-color: var(--accent-bg); }
+  100% { outline: none; background-color: transparent; }
+}
+
 .table-toggle {
   display: flex;
   align-items: center;

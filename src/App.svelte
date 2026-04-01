@@ -146,6 +146,7 @@
 <StatsBar />
 <Sidebar
   {selectedGuestId}
+  {selectedTableId}
   onselect={(id) => (selectedGuestId = selectedGuestId === id ? null : id)}
   onshowmodal={showModal}
   onpantotable={handlePanToTable}

@@ -295,15 +295,26 @@
   }
 
   // Window event listeners + initial centering
+  let hasCentered = false;
   onMount(() => {
     window.addEventListener("mousemove", handleWindowMouseMove);
     window.addEventListener("mouseup", handleWindowMouseUp);
     centerView();
+    if (getTables().length > 0) hasCentered = true;
     onready?.({ panToTable });
     return () => {
       window.removeEventListener("mousemove", handleWindowMouseMove);
       window.removeEventListener("mouseup", handleWindowMouseUp);
     };
+  });
+
+  // Re-center once tables load (if data wasn't ready on mount)
+  $effect(() => {
+    const tables = getTables();
+    if (tables.length > 0 && !hasCentered) {
+      hasCentered = true;
+      centerView();
+    }
   });
 </script>
 
