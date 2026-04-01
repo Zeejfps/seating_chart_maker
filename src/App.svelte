@@ -1,97 +1,172 @@
-<script>
-  import svelteLogo from "./assets/svelte.svg";
-  import viteLogo from "./assets/vite.svg";
-  import heroImg from "./assets/hero.png";
-  import Counter from "./lib/Counter.svelte";
+<script lang="ts">
+  import { onMount } from "svelte";
+  import { getGuests, getState, replaceAll } from "./lib/state.svelte";
+  import {
+    undo,
+    redo,
+    clearHistory,
+    executeCommand,
+  } from "./lib/command-history.svelte";
+  import { saveToLocalStorage, loadFromLocalStorage } from "./lib/persistence";
+  import {
+    AddGuestCommand,
+    RemoveGuestCommand,
+    BatchCommand,
+  } from "./lib/commands";
+  import { detectMergeChanges } from "./lib/csv";
+  import type { ChartState } from "./lib/types";
+  import Toolbar from "./lib/components/Toolbar.svelte";
+  import StatsBar from "./lib/components/StatsBar.svelte";
+  import Sidebar from "./lib/components/Sidebar.svelte";
+  import TableGrid from "./lib/components/TableGrid.svelte";
+  import Modal from "./lib/components/Modal.svelte";
+
+  let selectedGuestId: string | null = $state(null);
+  let initialized = $state(false);
+
+  // Modal state
+  let modalType: string | null = $state(null);
+  let modalData: unknown = $state(null);
+
+  onMount(() => {
+    const saved = loadFromLocalStorage();
+    if (saved) replaceAll(saved);
+    initialized = true;
+  });
+
+  // Auto-save (only after initial load)
+  $effect(() => {
+    const state = getState();
+    if (initialized) {
+      saveToLocalStorage(state);
+    }
+  });
+
+  // Keyboard shortcuts
+  function handleKeydown(e: KeyboardEvent) {
+    if (
+      e.target instanceof HTMLInputElement ||
+      e.target instanceof HTMLTextAreaElement
+    )
+      return;
+    if (e.ctrlKey && e.key === "z") {
+      e.preventDefault();
+      undo();
+    }
+    if (e.ctrlKey && (e.key === "y" || (e.shiftKey && e.key === "Z"))) {
+      e.preventDefault();
+      redo();
+    }
+  }
+
+  function showModal(type: string, data?: unknown) {
+    modalType = type;
+    modalData = data;
+  }
+
+  function closeModal() {
+    modalType = null;
+    modalData = null;
+  }
+
+  // CSV import: replace
+  function handleCsvReplace() {
+    const names = modalData as string[];
+    clearHistory();
+    replaceAll({
+      guests: names.map((name) => ({
+        id: crypto.randomUUID(),
+        name,
+        tableId: null,
+      })),
+      tables: [],
+    });
+    closeModal();
+  }
+
+  // CSV import: merge
+  function handleCsvMerge() {
+    const names = modalData as string[];
+    const { toAdd, toRemove } = detectMergeChanges(getGuests(), names);
+    const cmds = [
+      ...toAdd.map(
+        (name) =>
+          new AddGuestCommand({
+            id: crypto.randomUUID(),
+            name,
+            tableId: null,
+          }),
+      ),
+      ...toRemove.map((guest) => new RemoveGuestCommand(guest)),
+    ];
+    if (cmds.length > 0) {
+      executeCommand(new BatchCommand(cmds, "Merge guest list"));
+    }
+    closeModal();
+  }
+
+  // Snapshot import: confirm replace
+  function handleSnapshotReplace() {
+    const state = modalData as ChartState;
+    clearHistory();
+    replaceAll(state);
+    closeModal();
+  }
 </script>
 
-<section id="center">
-  <div class="hero">
-    <img src={heroImg} class="base" width="170" height="179" alt="" />
-    <img src={svelteLogo} class="framework" alt="Svelte logo" />
-    <img src={viteLogo} class="vite" alt="Vite logo" />
-  </div>
-  <div>
-    <h1>Get started</h1>
-    <p>Edit <code>src/App.svelte</code> and save to test <code>HMR</code></p>
-  </div>
-  <Counter />
-</section>
+<svelte:window onkeydown={handleKeydown} />
 
-<div class="ticks"></div>
+<Toolbar onshowmodal={showModal} />
+<StatsBar />
+<Sidebar
+  {selectedGuestId}
+  onselect={(id) => (selectedGuestId = id)}
+  onshowmodal={showModal}
+/>
+<TableGrid
+  {selectedGuestId}
+  onclearselection={() => (selectedGuestId = null)}
+/>
 
-<section id="next-steps">
-  <div id="docs">
-    <svg class="icon" role="presentation" aria-hidden="true">
-      <use href="/icons.svg#documentation-icon"></use>
-    </svg>
-    <h2>Documentation</h2>
-    <p>Your questions, answered</p>
-    <ul>
-      <li>
-        <a href="https://vite.dev/" target="_blank" rel="noreferrer">
-          <img class="logo" src={viteLogo} alt="" />
-          Explore Vite
-        </a>
-      </li>
-      <li>
-        <a href="https://svelte.dev/" target="_blank" rel="noreferrer">
-          <img class="button-icon" src={svelteLogo} alt="" />
-          Learn more
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div id="social">
-    <svg class="icon" role="presentation" aria-hidden="true">
-      <use href="/icons.svg#social-icon"></use>
-    </svg>
-    <h2>Connect with us</h2>
-    <p>Join the Vite community</p>
-    <ul>
-      <li>
-        <a
-          href="https://github.com/vitejs/vite"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <svg class="button-icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#github-icon"></use>
-          </svg>
-          GitHub
-        </a>
-      </li>
-      <li>
-        <a href="https://chat.vite.dev/" target="_blank" rel="noreferrer">
-          <svg class="button-icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#discord-icon"></use>
-          </svg>
-          Discord
-        </a>
-      </li>
-      <li>
-        <a href="https://x.com/vite_js" target="_blank" rel="noreferrer">
-          <svg class="button-icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#x-icon"></use>
-          </svg>
-          X.com
-        </a>
-      </li>
-      <li>
-        <a
-          href="https://bsky.app/profile/vite.dev"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <svg class="button-icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#bluesky-icon"></use>
-          </svg>
-          Bluesky
-        </a>
-      </li>
-    </ul>
-  </div>
-</section>
+{#if modalType === "csv-import"}
+  <Modal title="Import Guest List" onclose={closeModal}>
+    {#snippet children()}
+      <p>
+        You already have guests. Would you like to <strong>replace</strong>
+        everything or <strong>merge</strong> with existing data?
+      </p>
+      <p style="font-size: 13px; margin-top: 8px; color: var(--text);">
+        Merge adds missing guests, removes guests not in the CSV, and preserves
+        existing table assignments.
+      </p>
+    {/snippet}
+    {#snippet actions()}
+      <button onclick={closeModal}>Cancel</button>
+      <button onclick={handleCsvReplace}>Replace</button>
+      <button class="primary" onclick={handleCsvMerge}>Merge</button>
+    {/snippet}
+  </Modal>
+{/if}
 
-<div class="ticks"></div>
-<section id="spacer"></section>
+{#if modalType === "snapshot-import"}
+  <Modal title="Import Snapshot" onclose={closeModal}>
+    {#snippet children()}
+      <p>This will replace all current data with the imported snapshot.</p>
+    {/snippet}
+    {#snippet actions()}
+      <button onclick={closeModal}>Cancel</button>
+      <button class="primary" onclick={handleSnapshotReplace}>Replace</button>
+    {/snippet}
+  </Modal>
+{/if}
+
+{#if modalType === "error"}
+  <Modal title="Error" onclose={closeModal}>
+    {#snippet children()}
+      <p>{modalData}</p>
+    {/snippet}
+    {#snippet actions()}
+      <button onclick={closeModal}>OK</button>
+    {/snippet}
+  </Modal>
+{/if}

@@ -27,6 +27,19 @@ export default tseslint.config(
     },
   },
   {
+    files: ["**/*.svelte.ts"],
+    languageOptions: {
+      parser: tseslint.parser,
+    },
+  },
+  {
+    rules: {
+      "svelte/no-useless-children-snippet": "off",
+      "svelte/prefer-writable-derived": "off",
+      "svelte/prefer-svelte-reactivity": "off",
+    },
+  },
+  {
     ignores: ["build/", "dist/", ".svelte-kit/", "node_modules/"],
   },
 );
