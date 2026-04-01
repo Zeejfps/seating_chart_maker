@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { getUnassignedGuests, getGuests, getGuestsByTable, getTables, setDndActive } from "../state.svelte";
+  import { getUnassignedGuests, getGuests, getGuestsByTable, getTables, setDndActive, isDndActive } from "../state.svelte";
+  import { loadTreeState, isTableExpanded, toggleTable, setSearchExpandedTables } from "../tree-state.svelte";
   import { executeCommand } from "../command-history.svelte";
   import {
     AddGuestCommand,
@@ -45,6 +46,7 @@
   });
 
   // --- Assigned guests ---
+  loadTreeState();
   let assignedExpanded = $state(false);
 
   let filteredAssignedByTable: { table: Table; guests: Guest[] }[] = $derived.by(() => {
@@ -66,12 +68,15 @@
     filteredAssignedByTable.reduce((sum, g) => sum + g.guests.length, 0),
   );
 
-  // Auto-expand/collapse based on search
+  // Auto-expand assigned section and matching table nodes on search
   $effect(() => {
     if (searchQuery.length > 0) {
       assignedExpanded = true;
+      const matchingTableIds = filteredAssignedByTable.map((g) => g.table.id);
+      setSearchExpandedTables(matchingTableIds);
     } else {
       assignedExpanded = false;
+      setSearchExpandedTables(null);
     }
   });
 
@@ -106,6 +111,10 @@
       if (original && original.tableId !== tableId) {
         executeCommand(new AssignGuestCommand(item.id, tableId, original.tableId));
       }
+    }
+    // Auto-expand if dropped into a collapsed table
+    if (!isTableExpanded(tableId)) {
+      toggleTable(tableId);
     }
     const current = new Map(localAssignedByTable);
     current.set(tableId, newItems);
@@ -300,13 +309,33 @@
         <div class="assigned-groups">
           {#each filteredAssignedByTable as { table } (table.id)}
             {@const items = localAssignedByTable.get(table.id) ?? []}
+            {@const expanded = isTableExpanded(table.id)}
             <div class="table-group">
-              <button class="table-subheader" onclick={() => onpantotable(table.id)}>
-                <span class="table-name">{table.name}</span>
-                <span class="table-count">{items.length}/{table.capacity}</span>
-              </button>
+              <div class="table-subheader">
+                <button class="table-toggle" onclick={() => toggleTable(table.id)}>
+                  <span class="toggle-arrow" class:expanded>&#9654;</span>
+                  <span class="table-name">Table {table.name}</span>
+                  <span class="table-count">{items.length}/{table.capacity}</span>
+                </button>
+                <button
+                  class="pan-to-table-btn"
+                  title="Pan to table"
+                  onclick={() => onpantotable(table.id)}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="22" y1="12" x2="18" y2="12"></line>
+                    <line x1="6" y1="12" x2="2" y2="12"></line>
+                    <line x1="12" y1="6" x2="12" y2="2"></line>
+                    <line x1="12" y1="22" x2="12" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
               <div
                 class="guest-list assigned-guest-list"
+                class:collapsed={!expanded}
+                class:dnd-accepting={!expanded && isDndActive()}
                 use:dndzone={{
                   items,
                   type: "guest",
@@ -322,9 +351,11 @@
                 onconsider={(e) => handleAssignedConsider(table.id, e)}
                 onfinalize={(e) => handleAssignedFinalize(table.id, e)}
               >
-                {#each items as guest (guest.id)}
-                  <GuestItem {guest} {selectedGuestId} onselect={(id) => onselect(id)} />
-                {/each}
+                {#if expanded}
+                  {#each items as guest (guest.id)}
+                    <GuestItem {guest} {selectedGuestId} onselect={(id) => onselect(id)} />
+                  {/each}
+                {/if}
               </div>
             </div>
           {/each}
