@@ -78,10 +78,20 @@
     if (!el) return;
     const name =
       el.querySelector(".guest-name")?.textContent ?? el.textContent ?? "";
-    el.innerHTML = name;
-    el.style.cssText += `
+    const dots = `<span style="
+      display: inline-block;
+      width: 10px; height: 14px;
+      background-image: radial-gradient(circle, currentColor 1.2px, transparent 1.2px);
+      background-size: 5px 5px;
+      opacity: 0.5;
+      flex-shrink: 0;
+      margin-right: 6px;
+    "></span>`;
+    el.innerHTML = `<span style="
+      display: inline-flex;
+      align-items: center;
       border-radius: 20px;
-      padding: 4px 14px;
+      padding: 4px 14px 4px 10px;
       background: var(--accent-bg);
       border: 1.5px solid var(--accent-border);
       color: var(--text-h);
@@ -89,10 +99,16 @@
       font-weight: 500;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       white-space: nowrap;
-      width: auto !important;
-      height: auto !important;
-      display: inline-flex;
+    ">${dots}${name}</span>`;
+    el.style.cssText += `
+      display: flex;
       align-items: center;
+      justify-content: flex-start;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      outline: none !important;
+      padding: 0 !important;
     `;
   }
 
@@ -150,7 +166,6 @@
       type: "guest",
       flipDurationMs: 150,
       morphDisabled: true,
-      centreDraggedOnCursor: true,
       dropTargetStyle: {
         outline: "2px solid rgba(170, 59, 255, 0.5)",
         "background-color": "rgba(170, 59, 255, 0.05)",
