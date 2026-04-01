@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getUnassignedGuests, getGuests } from "../state.svelte";
+  import { getUnassignedGuests, getGuests, setDndActive } from "../state.svelte";
   import { executeCommand } from "../command-history.svelte";
   import {
     AddGuestCommand,
@@ -131,7 +131,7 @@
     el.style.cssText += `
       display: flex;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: center;
       background: transparent !important;
       border: none !important;
       box-shadow: none !important;
@@ -142,11 +142,13 @@
 
   function handleDndConsider(e: CustomEvent) {
     dragging = true;
+    setDndActive(true);
     localItems = e.detail.items;
   }
 
   function handleDndFinalize(e: CustomEvent) {
     dragging = false;
+    setDndActive(false);
     const newItems: Guest[] = e.detail.items;
     let hadUnassignments = false;
     // Check if a guest was dropped here from a table (unassign)
@@ -204,6 +206,7 @@
     use:dndzone={{
       items: localItems,
       type: "guest",
+      centreDraggedOnCursor: true,
       dropFromOthersDisabled: false,
       flipDurationMs: 150,
       morphDisabled: true,

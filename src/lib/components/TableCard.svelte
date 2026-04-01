@@ -9,7 +9,7 @@
     ChangeTableCapacityCommand,
     ReorderGuestsCommand,
   } from "../commands";
-  import { getGuests } from "../state.svelte";
+  import { getGuests, isDndActive, setDndActive } from "../state.svelte";
   import InlineEdit from "./InlineEdit.svelte";
   import { dndzone } from "svelte-dnd-action";
 
@@ -115,11 +115,13 @@
 
   function handleDndConsider(e: CustomEvent) {
     dragging = true;
+    setDndActive(true);
     localItems = e.detail.items;
   }
 
   function handleDndFinalize(e: CustomEvent) {
     dragging = false;
+    setDndActive(false);
     const newItems: Guest[] = e.detail.items;
     let hadNewAssignments = false;
     for (const item of newItems) {
@@ -151,6 +153,7 @@
 <div
   class="table-card"
   class:drop-target={!!selectedGuestId}
+  class:has-room={isDndActive() && tableGuests.length < table.capacity}
   onclick={handleCardClick}
 >
   <div class="table-card-header">
@@ -175,6 +178,7 @@
     use:dndzone={{
       items: localItems,
       type: "guest",
+      centreDraggedOnCursor: true,
       flipDurationMs: 150,
       morphDisabled: true,
       dropTargetStyle: {

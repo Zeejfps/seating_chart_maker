@@ -373,6 +373,10 @@ input:focus {
   box-shadow: 0 0 0 2px var(--accent-border);
 }
 
+.table-card.has-room {
+  box-shadow: 0 0 0 2px var(--accent-border);
+}
+
 .table-card-header {
   display: flex;
   align-items: center;
@@ -683,6 +687,11 @@ input:focus {
   opacity: 0.8;
   z-index: 10;
   cursor: grabbing;
+}
+
+.table-circle.has-room {
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
 .table-circle-name {

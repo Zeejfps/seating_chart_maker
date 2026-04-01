@@ -2,6 +2,15 @@ import type { Guest, Table, ChartState } from "./types";
 
 let _guests: Guest[] = $state([]);
 let _tables: Table[] = $state([]);
+let _dndActive: boolean = $state(false);
+
+function isDndActive(): boolean {
+  return _dndActive;
+}
+
+function setDndActive(active: boolean) {
+  _dndActive = active;
+}
 
 function getGuests(): Guest[] {
   return _guests;
@@ -101,6 +110,8 @@ function getState(): ChartState {
 }
 
 export {
+  isDndActive,
+  setDndActive,
   getGuests,
   getTables,
   getUnassignedGuests,

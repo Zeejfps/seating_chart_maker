@@ -6,6 +6,8 @@
     getGuests,
     getNextTablePosition,
     getNextTableNum,
+    isDndActive,
+    setDndActive,
   } from "../state.svelte";
   import { executeCommand } from "../command-history.svelte";
   import {
@@ -245,6 +247,7 @@
 
   function handleDndConsider(tableId: string, e: CustomEvent) {
     dndDraggingTable = tableId;
+    setDndActive(true);
     const newMap = new Map(dndItemsByTable);
     newMap.set(tableId, e.detail.items);
     dndItemsByTable = newMap;
@@ -252,6 +255,7 @@
 
   function handleDndFinalize(tableId: string, e: CustomEvent) {
     dndDraggingTable = null;
+    setDndActive(false);
     const newItems: Guest[] = e.detail.items;
     for (const item of newItems) {
       const original = getGuests().find((g) => g.id === item.id);
@@ -310,11 +314,13 @@
       {@const capacityStatus = count >= table.capacity ? (count > table.capacity ? "over" : "at") : "under"}
       {@const dndItems = dndItemsByTable.get(table.id) ?? []}
       <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+      {@const hasRoom = count < table.capacity}
       <div
         class="table-circle"
         class:selected={selectedTableId === table.id}
         class:is-dragging={isDragging}
         class:drop-target={!!selectedGuestId}
+        class:has-room={isDndActive() && hasRoom}
         style="left:{tx}px; top:{ty}px;"
         onmousedown={(e) => handleTableMouseDown(e, table.id)}
         onclick={(e) => handleTableClick(e, table.id)}
@@ -339,6 +345,7 @@
           use:dndzone={{
             items: dndItems,
             type: "guest",
+            centreDraggedOnCursor: true,
             flipDurationMs: 0,
             morphDisabled: true,
             dragDisabled: true,
