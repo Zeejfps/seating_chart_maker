@@ -646,6 +646,22 @@ input:focus {
   user-select: none;
   transition: border-color 0.15s, box-shadow 0.15s;
   z-index: 1;
+  overflow: visible;
+}
+
+.chair {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: transparent;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.chair.occupied {
+  background: var(--border);
 }
 
 .table-circle:hover {

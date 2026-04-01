@@ -188,10 +188,10 @@
     const padding = 80;
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     for (const t of tables) {
-      minX = Math.min(minX, t.x - 50);
-      minY = Math.min(minY, t.y - 50);
-      maxX = Math.max(maxX, t.x + 50);
-      maxY = Math.max(maxY, t.y + 50);
+      minX = Math.min(minX, t.x - 70);
+      minY = Math.min(minY, t.y - 70);
+      maxX = Math.max(maxX, t.x + 70);
+      maxY = Math.max(maxY, t.y + 70);
     }
 
     const contentW = maxX - minX + padding * 2;
@@ -317,6 +317,18 @@
       >
         <span class="table-circle-name">{table.name}</span>
         <span class="capacity-badge {capacityStatus}">{count}/{table.capacity}</span>
+        {#each Array(table.capacity) as _, i}
+          {@const angle = (2 * Math.PI * i) / table.capacity - Math.PI / 2}
+          {@const chairRadius = 58}
+          {@const cx = Math.cos(angle) * chairRadius}
+          {@const cy = Math.sin(angle) * chairRadius}
+          {@const isOccupied = i < count}
+          <div
+            class="chair"
+            class:occupied={isOccupied}
+            style="left: calc(50% + {cx}px - 6px); top: calc(50% + {cy}px - 6px);"
+          ></div>
+        {/each}
         <!-- Hidden dndzone for guest drops -->
         <div
           style="position:absolute; inset:0; border-radius:50%; overflow:hidden;"
