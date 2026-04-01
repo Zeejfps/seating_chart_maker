@@ -5,10 +5,13 @@ const GRID_SNAP = 50;
 const TABLE_SPACING = 150;
 
 function backfillTablePositions(tables: Table[]): Table[] {
+  const COLS = 10;
+  const startX = 1500 - Math.floor(COLS / 2) * TABLE_SPACING;
+  const startY = 1000 - 2 * TABLE_SPACING;
   return tables.map((t, i) => ({
     ...t,
-    x: t.x ?? Math.round(((i % 10) * TABLE_SPACING + 100) / GRID_SNAP) * GRID_SNAP,
-    y: t.y ?? Math.round((Math.floor(i / 10) * TABLE_SPACING + 100) / GRID_SNAP) * GRID_SNAP,
+    x: t.x ?? Math.round((startX + (i % COLS) * TABLE_SPACING) / GRID_SNAP) * GRID_SNAP,
+    y: t.y ?? Math.round((startY + Math.floor(i / COLS) * TABLE_SPACING) / GRID_SNAP) * GRID_SNAP,
   }));
 }
 

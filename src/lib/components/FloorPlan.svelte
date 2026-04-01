@@ -261,10 +261,22 @@
     onclearselection();
   }
 
-  // Window event listeners
+  function centerView() {
+    if (!viewportEl) return;
+    const rect = viewportEl.getBoundingClientRect();
+    if (getTables().length > 0) {
+      fitToView();
+    } else {
+      panX = rect.width / 2 - (CANVAS_W / 2) * zoom;
+      panY = rect.height / 2 - (CANVAS_H / 2) * zoom;
+    }
+  }
+
+  // Window event listeners + initial centering
   onMount(() => {
     window.addEventListener("mousemove", handleWindowMouseMove);
     window.addEventListener("mouseup", handleWindowMouseUp);
+    centerView();
     return () => {
       window.removeEventListener("mousemove", handleWindowMouseMove);
       window.removeEventListener("mouseup", handleWindowMouseUp);

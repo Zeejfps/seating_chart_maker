@@ -31,14 +31,16 @@
     const startNum = getNextTableNum();
     const SPACING = 150;
     const GRID = 50;
-    const COLS = Math.floor(3000 / SPACING);
+    const COLS = 10;
+    const startX = 1500 - Math.floor(COLS / 2) * SPACING;
+    const startY = 1000 - 2 * SPACING;
     const occupied = new Set(getTables().map((t) => `${t.x},${t.y}`));
     let slot = 0;
     for (let i = 0; i < bulkCount; i++) {
       let x: number, y: number;
       while (true) {
-        x = Math.round(((slot % COLS) * SPACING + 100) / GRID) * GRID;
-        y = Math.round((Math.floor(slot / COLS) * SPACING + 100) / GRID) * GRID;
+        x = Math.round((startX + (slot % COLS) * SPACING) / GRID) * GRID;
+        y = Math.round((startY + Math.floor(slot / COLS) * SPACING) / GRID) * GRID;
         slot++;
         if (!occupied.has(`${x},${y}`)) break;
       }
