@@ -81,7 +81,7 @@
           (g) => !query || g.name.toLowerCase().includes(query),
         ),
       }))
-      .filter((group) => group.guests.length > 0);
+      .filter((group) => !query || group.guests.length > 0);
   });
 
   let totalFilteredAssigned = $derived(
