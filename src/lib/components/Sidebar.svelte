@@ -4,6 +4,7 @@
   import {
     AddGuestCommand,
     UnassignGuestCommand,
+    ReorderGuestsCommand,
     BatchCommand,
   } from "../commands";
   import type { Guest } from "../types";
@@ -147,11 +148,22 @@
   function handleDndFinalize(e: CustomEvent) {
     dragging = false;
     const newItems: Guest[] = e.detail.items;
+    let hadUnassignments = false;
     // Check if a guest was dropped here from a table (unassign)
     for (const item of newItems) {
       const original = getGuests().find((g) => g.id === item.id);
       if (original && original.tableId !== null) {
+        hadUnassignments = true;
         executeCommand(new UnassignGuestCommand(original.id, original.tableId));
+      }
+    }
+    // Persist reorder if no unassignments (pure reorder within sidebar)
+    if (!hadUnassignments) {
+      const newOrder = newItems.map((g) => g.id);
+      const oldOrder = filteredGuests.map((g) => g.id);
+      const orderChanged = newOrder.some((id, i) => id !== oldOrder[i]);
+      if (orderChanged) {
+        executeCommand(new ReorderGuestsCommand(newOrder, oldOrder));
       }
     }
     localItems = newItems;

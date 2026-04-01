@@ -53,6 +53,18 @@ function updateTable(id: string, patch: Partial<Table>) {
   _tables = _tables.map((t) => (t.id === id ? { ...t, ...patch } : t));
 }
 
+function reorderGuests(orderedIds: string[]) {
+  const idToIndex = new Map(orderedIds.map((id, i) => [id, i]));
+  _guests = [..._guests].sort((a, b) => {
+    const ai = idToIndex.get(a.id);
+    const bi = idToIndex.get(b.id);
+    if (ai !== undefined && bi !== undefined) return ai - bi;
+    if (ai !== undefined) return -1;
+    if (bi !== undefined) return 1;
+    return 0;
+  });
+}
+
 function replaceAll(state: ChartState) {
   _guests = state.guests;
   _tables = state.tables;
@@ -73,6 +85,7 @@ export {
   addTable,
   removeTable,
   updateTable,
+  reorderGuests,
   replaceAll,
   getState,
 };

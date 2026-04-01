@@ -6,6 +6,7 @@ import {
   addTable,
   removeTable,
   updateTable,
+  reorderGuests,
   getGuests,
 } from "./state.svelte";
 
@@ -140,6 +141,20 @@ export class ChangeTableCapacityCommand implements Command {
   }
   undo() {
     updateTable(this.tableId, { capacity: this.oldCapacity });
+  }
+}
+
+export class ReorderGuestsCommand implements Command {
+  description = "Reorder guests";
+  constructor(
+    private newOrder: string[],
+    private oldOrder: string[],
+  ) {}
+  execute() {
+    reorderGuests(this.newOrder);
+  }
+  undo() {
+    reorderGuests(this.oldOrder);
   }
 }
 

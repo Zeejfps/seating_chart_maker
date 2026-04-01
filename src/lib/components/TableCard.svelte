@@ -7,6 +7,7 @@
     RemoveTableCommand,
     RenameTableCommand,
     ChangeTableCapacityCommand,
+    ReorderGuestsCommand,
   } from "../commands";
   import { getGuests } from "../state.svelte";
   import InlineEdit from "./InlineEdit.svelte";
@@ -120,15 +121,25 @@
   function handleDndFinalize(e: CustomEvent) {
     dragging = false;
     const newItems: Guest[] = e.detail.items;
+    let hadNewAssignments = false;
     for (const item of newItems) {
       const original = getGuests().find((g) => g.id === item.id);
       if (original) {
         if (original.tableId !== table.id) {
-          // Guest came from elsewhere — assign or move
+          hadNewAssignments = true;
           executeCommand(
             new AssignGuestCommand(original.id, table.id, original.tableId),
           );
         }
+      }
+    }
+    // Persist reorder if no new assignments (pure reorder within table)
+    if (!hadNewAssignments) {
+      const newOrder = newItems.map((g) => g.id);
+      const oldOrder = tableGuests.map((g) => g.id);
+      const orderChanged = newOrder.some((id, i) => id !== oldOrder[i]);
+      if (orderChanged) {
+        executeCommand(new ReorderGuestsCommand(newOrder, oldOrder));
       }
     }
     localItems = newItems;
