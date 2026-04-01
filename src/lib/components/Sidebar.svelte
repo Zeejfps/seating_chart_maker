@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import { getUnassignedGuests, getGuests, getGuestsByTable, getTables, setDndActive, isDndActive } from "../state.svelte";
   import { loadTreeState, isTableExpanded, toggleTable, expandTable, setSearchExpandedTables } from "../tree-state.svelte";
   import { executeCommand } from "../command-history.svelte";
@@ -55,15 +56,17 @@
 
   $effect(() => {
     const id = selectedTableId;
-    if (id && id !== prevSelectedTableId) {
-      prevSelectedTableId = id;
-      assignedExpanded = true;
-      expandTable(id);
-      flashTableId = null;
-      requestAnimationFrame(() => { flashTableId = id; });
-    } else if (!id) {
-      prevSelectedTableId = null;
-    }
+    untrack(() => {
+      if (id && id !== prevSelectedTableId) {
+        prevSelectedTableId = id;
+        assignedExpanded = true;
+        expandTable(id);
+        flashTableId = null;
+        requestAnimationFrame(() => { flashTableId = id; });
+      } else if (!id) {
+        prevSelectedTableId = null;
+      }
+    });
   });
 
   let filteredAssignedByTable: { table: Table; guests: Guest[] }[] = $derived.by(() => {
