@@ -6,7 +6,6 @@
     getGuests,
     getNextTablePosition,
     getNextTableNum,
-    isDndActive,
     setDndActive,
   } from "../state.svelte";
   import { executeCommand } from "../command-history.svelte";
@@ -14,7 +13,6 @@
     AddTableCommand,
     AssignGuestCommand,
     MoveTableCommand,
-    RemoveTableCommand,
   } from "../commands";
   import type { Guest } from "../types";
   import { dndzone } from "svelte-dnd-action";
@@ -101,7 +99,7 @@
     }
   }
 
-  function handleWindowMouseUp(_e: MouseEvent) {
+  function handleWindowMouseUp() {
     if (isPanning) {
       const didPan = panX !== panStartX || panY !== panStartY;
       isPanning = false;
@@ -375,8 +373,6 @@
             : "at"
           : "under"}
       {@const dndItems = dndItemsByTable.get(table.id) ?? []}
-      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-      {@const hasRoom = count < table.capacity}
       <div
         class="table-circle"
         class:selected={selectedTableId === table.id}
@@ -391,7 +387,8 @@
         <span class="capacity-badge {capacityStatus}"
           >{count}/{table.capacity}</span
         >
-        {#each Array(table.capacity) as _, i}
+        <!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
+        {#each Array(table.capacity) as _seat, i (i)}
           {@const angle = (2 * Math.PI * i) / table.capacity - Math.PI / 2}
           {@const chairRadius = 58}
           {@const cx = Math.cos(angle) * chairRadius}
