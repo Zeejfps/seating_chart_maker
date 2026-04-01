@@ -10,8 +10,13 @@ function backfillTablePositions(tables: Table[]): Table[] {
   const startY = 1000 - 2 * TABLE_SPACING;
   return tables.map((t, i) => ({
     ...t,
-    x: t.x ?? Math.round((startX + (i % COLS) * TABLE_SPACING) / GRID_SNAP) * GRID_SNAP,
-    y: t.y ?? Math.round((startY + Math.floor(i / COLS) * TABLE_SPACING) / GRID_SNAP) * GRID_SNAP,
+    x:
+      t.x ??
+      Math.round((startX + (i % COLS) * TABLE_SPACING) / GRID_SNAP) * GRID_SNAP,
+    y:
+      t.y ??
+      Math.round((startY + Math.floor(i / COLS) * TABLE_SPACING) / GRID_SNAP) *
+        GRID_SNAP,
   }));
 }
 
@@ -54,7 +59,10 @@ export async function importSnapshot(file: File): Promise<ChartState> {
   if (!isValidSnapshot(parsed)) {
     throw new Error("Invalid snapshot file");
   }
-  return { guests: parsed.guests, tables: backfillTablePositions(parsed.tables) };
+  return {
+    guests: parsed.guests,
+    tables: backfillTablePositions(parsed.tables),
+  };
 }
 
 export function exportGuestListCsv(guests: Guest[], tables: Table[]): void {

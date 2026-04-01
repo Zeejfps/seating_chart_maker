@@ -1,5 +1,10 @@
 <script lang="ts">
-  import { getTables, getGuestsByTable, getNextTablePosition, getNextTableNum } from "../state.svelte";
+  import {
+    getTables,
+    getGuestsByTable,
+    getNextTablePosition,
+    getNextTableNum,
+  } from "../state.svelte";
   import { executeCommand } from "../command-history.svelte";
   import { AddTableCommand } from "../commands";
   import TableCard from "./TableCard.svelte";

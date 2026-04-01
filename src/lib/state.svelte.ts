@@ -96,7 +96,8 @@ function getNextTablePosition(): { x: number; y: number } {
   const occupied = new Set(_tables.map((t) => `${t.x},${t.y}`));
   for (let i = 0; i < 1000; i++) {
     const x = Math.round((START_X + (i % COLS) * SPACING) / GRID) * GRID;
-    const y = Math.round((START_Y + Math.floor(i / COLS) * SPACING) / GRID) * GRID;
+    const y =
+      Math.round((START_Y + Math.floor(i / COLS) * SPACING) / GRID) * GRID;
     if (!occupied.has(`${x},${y}`)) {
       return { x, y };
     }

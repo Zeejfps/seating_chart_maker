@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { getTables, getGuests, getState, replaceAll, getNextTableNum } from "../state.svelte";
+  import {
+    getTables,
+    getGuests,
+    getState,
+    replaceAll,
+    getNextTableNum,
+  } from "../state.svelte";
   import {
     getCanUndo,
     getCanRedo,
@@ -40,7 +46,9 @@
       let x: number, y: number;
       while (true) {
         x = Math.round((startX + (slot % COLS) * SPACING) / GRID) * GRID;
-        y = Math.round((startY + Math.floor(slot / COLS) * SPACING) / GRID) * GRID;
+        y =
+          Math.round((startY + Math.floor(slot / COLS) * SPACING) / GRID) *
+          GRID;
         slot++;
         if (!occupied.has(`${x},${y}`)) break;
       }

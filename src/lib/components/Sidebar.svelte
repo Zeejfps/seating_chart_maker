@@ -1,7 +1,20 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import { getUnassignedGuests, getGuests, getGuestsByTable, getTables, setDndActive, isDndActive } from "../state.svelte";
-  import { loadTreeState, isTableExpanded, toggleTable, expandTable, setSearchExpandedTables } from "../tree-state.svelte";
+  import {
+    getUnassignedGuests,
+    getGuests,
+    getGuestsByTable,
+    getTables,
+    setDndActive,
+    isDndActive,
+  } from "../state.svelte";
+  import {
+    loadTreeState,
+    isTableExpanded,
+    toggleTable,
+    expandTable,
+    setSearchExpandedTables,
+  } from "../tree-state.svelte";
   import { executeCommand } from "../command-history.svelte";
   import {
     AddGuestCommand,
@@ -23,7 +36,13 @@
     onpantotable: (tableId: string) => void;
   }
 
-  let { selectedGuestId, selectedTableId, onselect, onshowmodal, onpantotable }: Props = $props();
+  let {
+    selectedGuestId,
+    selectedTableId,
+    onselect,
+    onshowmodal,
+    onpantotable,
+  }: Props = $props();
 
   let searchQuery = $state("");
   let addingGuest = $state(false);
@@ -62,27 +81,30 @@
         assignedExpanded = true;
         expandTable(id);
         flashTableId = null;
-        requestAnimationFrame(() => { flashTableId = id; });
+        requestAnimationFrame(() => {
+          flashTableId = id;
+        });
       } else if (!id) {
         prevSelectedTableId = null;
       }
     });
   });
 
-  let filteredAssignedByTable: { table: Table; guests: Guest[] }[] = $derived.by(() => {
-    const tables = getTables();
-    const guestsByTable = getGuestsByTable();
-    const query = searchQuery.toLowerCase();
+  let filteredAssignedByTable: { table: Table; guests: Guest[] }[] =
+    $derived.by(() => {
+      const tables = getTables();
+      const guestsByTable = getGuestsByTable();
+      const query = searchQuery.toLowerCase();
 
-    return tables
-      .map((table) => ({
-        table,
-        guests: (guestsByTable.get(table.id) ?? []).filter(
-          (g) => !query || g.name.toLowerCase().includes(query),
-        ),
-      }))
-      .filter((group) => !query || group.guests.length > 0);
-  });
+      return tables
+        .map((table) => ({
+          table,
+          guests: (guestsByTable.get(table.id) ?? []).filter(
+            (g) => !query || g.name.toLowerCase().includes(query),
+          ),
+        }))
+        .filter((group) => !query || group.guests.length > 0);
+    });
 
   let totalFilteredAssigned = $derived(
     filteredAssignedByTable.reduce((sum, g) => sum + g.guests.length, 0),
@@ -104,13 +126,16 @@
   let localAssignedByTable: Map<string, Guest[]> = $state(new Map());
   let draggingAssignedTable: string | null = $state(null);
   let headerDropTable: string | null = $state(null);
-  let headerOverlayItems: Map<string, {id: string}[]> = $state(new Map());
+  let headerOverlayItems: Map<string, { id: string }[]> = $state(new Map());
 
   $effect(() => {
     if (!draggingAssignedTable) {
       const newMap = new Map<string, Guest[]>();
       for (const group of filteredAssignedByTable) {
-        newMap.set(group.table.id, group.guests.map((g) => ({ ...g })));
+        newMap.set(
+          group.table.id,
+          group.guests.map((g) => ({ ...g })),
+        );
       }
       localAssignedByTable = newMap;
     }
@@ -132,7 +157,9 @@
     for (const item of newItems) {
       const original = getGuests().find((g) => g.id === item.id);
       if (original && original.tableId !== tableId) {
-        executeCommand(new AssignGuestCommand(item.id, tableId, original.tableId));
+        executeCommand(
+          new AssignGuestCommand(item.id, tableId, original.tableId),
+        );
       }
     }
     // Auto-expand if dropped into a collapsed table
@@ -150,7 +177,10 @@
     setDndActive(true);
     if (trigger === TRIGGERS.DRAGGED_ENTERED) {
       headerDropTable = tableId;
-    } else if (trigger === TRIGGERS.DRAGGED_LEFT || trigger === TRIGGERS.DRAGGED_LEFT_ALL) {
+    } else if (
+      trigger === TRIGGERS.DRAGGED_LEFT ||
+      trigger === TRIGGERS.DRAGGED_LEFT_ALL
+    ) {
       if (headerDropTable === tableId) headerDropTable = null;
     }
     const current = new Map(headerOverlayItems);
@@ -161,11 +191,13 @@
   function handleHeaderFinalize(tableId: string, e: CustomEvent) {
     headerDropTable = null;
     setDndActive(false);
-    const newItems: {id: string}[] = e.detail.items;
+    const newItems: { id: string }[] = e.detail.items;
     for (const item of newItems) {
       const original = getGuests().find((g) => g.id === item.id);
       if (original && original.tableId !== tableId) {
-        executeCommand(new AssignGuestCommand(item.id, tableId, original.tableId));
+        executeCommand(
+          new AssignGuestCommand(item.id, tableId, original.tableId),
+        );
       }
     }
     if (!isTableExpanded(tableId)) {
@@ -359,7 +391,9 @@
         class="section-toggle"
         onclick={() => (assignedExpanded = !assignedExpanded)}
       >
-        <span class="toggle-arrow" class:expanded={assignedExpanded}>&#9654;</span>
+        <span class="toggle-arrow" class:expanded={assignedExpanded}
+          >&#9654;</span
+        >
         Assigned
         <span class="section-count">{totalFilteredAssigned}</span>
       </button>
@@ -370,19 +404,36 @@
             {@const items = localAssignedByTable.get(table.id) ?? []}
             {@const expanded = isTableExpanded(table.id)}
             <div class="table-group">
-              <div class="table-subheader" class:header-drop-highlight={headerDropTable === table.id} class:highlight-flash={flashTableId === table.id}>
-                <button class="table-toggle" onclick={() => toggleTable(table.id)}>
+              <div
+                class="table-subheader"
+                class:header-drop-highlight={headerDropTable === table.id}
+                class:highlight-flash={flashTableId === table.id}
+              >
+                <button
+                  class="table-toggle"
+                  onclick={() => toggleTable(table.id)}
+                >
                   <span class="toggle-arrow" class:expanded>&#9654;</span>
                   <span class="table-name">Table {table.name}</span>
-                  <span class="table-count">{items.length}/{table.capacity}</span>
+                  <span class="table-count"
+                    >{items.length}/{table.capacity}</span
+                  >
                 </button>
                 <button
                   class="pan-to-table-btn"
                   title="Pan to table"
                   onclick={() => onpantotable(table.id)}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
                     <circle cx="12" cy="12" r="10"></circle>
                     <line x1="22" y1="12" x2="18" y2="12"></line>
                     <line x1="6" y1="12" x2="2" y2="12"></line>
@@ -392,7 +443,7 @@
                 </button>
                 <div
                   class="header-drop-overlay"
-                  style:pointer-events={isDndActive() ? 'auto' : 'none'}
+                  style:pointer-events={isDndActive() ? "auto" : "none"}
                   use:dndzone={{
                     items: headerOverlayItems.get(table.id) ?? [],
                     type: "guest",
@@ -425,7 +476,11 @@
               >
                 {#if expanded}
                   {#each items as guest (guest.id)}
-                    <GuestItem {guest} {selectedGuestId} onselect={(id) => onselect(id)} />
+                    <GuestItem
+                      {guest}
+                      {selectedGuestId}
+                      onselect={(id) => onselect(id)}
+                    />
                   {/each}
                 {/if}
               </div>

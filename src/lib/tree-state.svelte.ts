@@ -42,4 +42,10 @@ function setSearchExpandedTables(tableIds: string[] | null) {
   _searchExpanded = tableIds ? new Set(tableIds) : null;
 }
 
-export { loadTreeState, isTableExpanded, toggleTable, expandTable, setSearchExpandedTables };
+export {
+  loadTreeState,
+  isTableExpanded,
+  toggleTable,
+  expandTable,
+  setSearchExpandedTables,
+};

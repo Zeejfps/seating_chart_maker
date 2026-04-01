@@ -1,6 +1,11 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import { getGuests, getTables, getState, replaceAll } from "./lib/state.svelte";
+  import {
+    getGuests,
+    getTables,
+    getState,
+    replaceAll,
+  } from "./lib/state.svelte";
   import {
     undo,
     redo,
@@ -27,7 +32,8 @@
   let activeTab: "cards" | "floorplan" = $state("floorplan");
   let selectedTableId: string | null = $state(null);
   let initialized = $state(false);
-  let floorPlanApi: { panToTable: (tableId: string) => void } | null = $state(null);
+  let floorPlanApi: { panToTable: (tableId: string) => void } | null =
+    $state(null);
 
   async function handlePanToTable(tableId: string) {
     if (activeTab !== "floorplan") {
@@ -153,8 +159,19 @@
 />
 <div class="main-area">
   <div class="view-tabs">
-    <button class:active={activeTab === "cards"} onclick={() => { activeTab = "cards"; selectedTableId = null; }}>Card View</button>
-    <button class:active={activeTab === "floorplan"} onclick={() => { activeTab = "floorplan"; }}>Floor Plan</button>
+    <button
+      class:active={activeTab === "cards"}
+      onclick={() => {
+        activeTab = "cards";
+        selectedTableId = null;
+      }}>Card View</button
+    >
+    <button
+      class:active={activeTab === "floorplan"}
+      onclick={() => {
+        activeTab = "floorplan";
+      }}>Floor Plan</button
+    >
   </div>
   {#if activeTab === "cards"}
     <TableGrid

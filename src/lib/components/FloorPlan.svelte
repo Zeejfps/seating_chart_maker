@@ -27,7 +27,13 @@
     onready?: (api: { panToTable: (tableId: string) => void }) => void;
   }
 
-  let { selectedGuestId, onclearselection, selectedTableId, onselecttable, onready }: Props = $props();
+  let {
+    selectedGuestId,
+    onclearselection,
+    selectedTableId,
+    onselecttable,
+    onready,
+  }: Props = $props();
 
   const CANVAS_W = 3000;
   const CANVAS_H = 2000;
@@ -59,7 +65,10 @@
     return Math.round(val / GRID_SIZE) * GRID_SIZE;
   }
 
-  function viewportToCanvas(clientX: number, clientY: number): { x: number; y: number } {
+  function viewportToCanvas(
+    clientX: number,
+    clientY: number,
+  ): { x: number; y: number } {
     if (!viewportEl) return { x: 0, y: 0 };
     const rect = viewportEl.getBoundingClientRect();
     return {
@@ -102,12 +111,24 @@
       return;
     }
     if (dragTableId) {
-      const snappedX = Math.max(0, Math.min(CANVAS_W, snapToGrid(dragCurrentX)));
-      const snappedY = Math.max(0, Math.min(CANVAS_H, snapToGrid(dragCurrentY)));
+      const snappedX = Math.max(
+        0,
+        Math.min(CANVAS_W, snapToGrid(dragCurrentX)),
+      );
+      const snappedY = Math.max(
+        0,
+        Math.min(CANVAS_H, snapToGrid(dragCurrentY)),
+      );
       didDragMove = snappedX !== dragStartX || snappedY !== dragStartY;
       if (didDragMove) {
         executeCommand(
-          new MoveTableCommand(dragTableId, dragStartX, dragStartY, snappedX, snappedY),
+          new MoveTableCommand(
+            dragTableId,
+            dragStartX,
+            dragStartY,
+            snappedX,
+            snappedY,
+          ),
         );
       }
       dragTableId = null;
@@ -144,7 +165,9 @@
     if (selectedGuestId) {
       const guest = getGuests().find((g) => g.id === selectedGuestId);
       if (guest) {
-        executeCommand(new AssignGuestCommand(guest.id, tableId, guest.tableId));
+        executeCommand(
+          new AssignGuestCommand(guest.id, tableId, guest.tableId),
+        );
         onclearselection();
       }
       return;
@@ -206,7 +229,10 @@
     }
 
     const padding = 80;
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
     for (const t of tables) {
       minX = Math.min(minX, t.x - 70);
       minY = Math.min(minY, t.y - 70);
@@ -253,7 +279,10 @@
     if (!dndDraggingTable) {
       const newMap = new Map<string, Guest[]>();
       for (const t of getTables()) {
-        newMap.set(t.id, (gbt.get(t.id) ?? []).map((g) => ({ ...g })));
+        newMap.set(
+          t.id,
+          (gbt.get(t.id) ?? []).map((g) => ({ ...g })),
+        );
       }
       dndItemsByTable = newMap;
     }
@@ -274,7 +303,9 @@
     for (const item of newItems) {
       const original = getGuests().find((g) => g.id === item.id);
       if (original && original.tableId !== tableId) {
-        executeCommand(new AssignGuestCommand(original.id, tableId, original.tableId));
+        executeCommand(
+          new AssignGuestCommand(original.id, tableId, original.tableId),
+        );
       }
     }
     const newMap = new Map(dndItemsByTable);
@@ -337,7 +368,12 @@
       {@const tx = isDragging ? dragCurrentX : table.x}
       {@const ty = isDragging ? dragCurrentY : table.y}
       {@const count = guests.length}
-      {@const capacityStatus = count >= table.capacity ? (count > table.capacity ? "over" : "at") : "under"}
+      {@const capacityStatus =
+        count >= table.capacity
+          ? count > table.capacity
+            ? "over"
+            : "at"
+          : "under"}
       {@const dndItems = dndItemsByTable.get(table.id) ?? []}
       <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
       {@const hasRoom = count < table.capacity}
@@ -352,7 +388,9 @@
         onclick={(e) => handleTableClick(e, table.id)}
       >
         <span class="table-circle-name">{table.name}</span>
-        <span class="capacity-badge {capacityStatus}">{count}/{table.capacity}</span>
+        <span class="capacity-badge {capacityStatus}"
+          >{count}/{table.capacity}</span
+        >
         {#each Array(table.capacity) as _, i}
           {@const angle = (2 * Math.PI * i) / table.capacity - Math.PI / 2}
           {@const chairRadius = 58}
@@ -382,7 +420,9 @@
           onfinalize={(e) => handleDndFinalize(table.id, e)}
         >
           {#each dndItems as guest (guest.id)}
-            <div style="position:absolute; opacity:0; pointer-events:none; width:1px; height:1px;">
+            <div
+              style="position:absolute; opacity:0; pointer-events:none; width:1px; height:1px;"
+            >
               {guest.name}
             </div>
           {/each}
@@ -391,7 +431,11 @@
     {/each}
   </div>
 
-  <button class="floor-plan-add-btn" onmousedown={(e) => e.stopPropagation()} onclick={handleAddTable}>
+  <button
+    class="floor-plan-add-btn"
+    onmousedown={(e) => e.stopPropagation()}
+    onclick={handleAddTable}
+  >
     + Add Table
   </button>
 
