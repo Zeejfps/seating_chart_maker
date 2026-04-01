@@ -139,6 +139,7 @@
       }
     }
     localItems = newItems;
+    onselect(null);
   }
 </script>
 

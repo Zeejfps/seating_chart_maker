@@ -49,6 +49,10 @@
       e.target instanceof HTMLTextAreaElement
     )
       return;
+    if (e.key === "Escape") {
+      selectedGuestId = null;
+      return;
+    }
     if (e.ctrlKey && e.key === "z") {
       e.preventDefault();
       undo();
@@ -120,7 +124,7 @@
 <StatsBar />
 <Sidebar
   {selectedGuestId}
-  onselect={(id) => (selectedGuestId = id)}
+  onselect={(id) => (selectedGuestId = selectedGuestId === id ? null : id)}
   onshowmodal={showModal}
 />
 <TableGrid

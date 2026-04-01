@@ -45,7 +45,9 @@
 
   function handleRemove(e: MouseEvent) {
     e.stopPropagation();
-    executeCommand(new RemoveGuestCommand(guest));
+    if (confirm(`Remove "${guest.name}" from the guest list?`)) {
+      executeCommand(new RemoveGuestCommand(guest));
+    }
   }
 
   function handleClick() {

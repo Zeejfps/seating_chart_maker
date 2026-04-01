@@ -61,7 +61,8 @@
     executeCommand(new UnassignGuestCommand(guestId, table.id));
   }
 
-  function handleCardClick() {
+  function handleCardClick(e: MouseEvent) {
+    e.stopPropagation();
     if (selectedGuestId) {
       const guest = getGuests().find((g) => g.id === selectedGuestId);
       if (guest) {
@@ -115,6 +116,7 @@
       }
     }
     localItems = newItems;
+    onclearselection();
   }
 </script>
 
