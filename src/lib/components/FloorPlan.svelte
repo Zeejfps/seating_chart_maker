@@ -91,7 +91,11 @@
 
   function handleWindowMouseUp(_e: MouseEvent) {
     if (isPanning) {
+      const didPan = panX !== panStartX || panY !== panStartY;
       isPanning = false;
+      if (!didPan) {
+        onselecttable(null);
+      }
       return;
     }
     if (dragTableId) {
