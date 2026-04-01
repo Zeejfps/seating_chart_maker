@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getTables, getGuestsByTable } from "../state.svelte";
+  import { getTables, getGuestsByTable, getNextTablePosition, getNextTableNum } from "../state.svelte";
   import { executeCommand } from "../command-history.svelte";
   import { AddTableCommand } from "../commands";
   import TableCard from "./TableCard.svelte";
@@ -11,21 +11,14 @@
 
   let { selectedGuestId, onclearselection }: Props = $props();
 
-  function getNextTableNum(): number {
-    let max = 0;
-    for (const t of getTables()) {
-      const n = parseInt(t.name, 10);
-      if (!isNaN(n) && n > max) max = n;
-    }
-    return max + 1;
-  }
-
   function handleAddTable() {
+    const pos = getNextTablePosition();
     executeCommand(
       new AddTableCommand({
         id: crypto.randomUUID(),
         name: String(getNextTableNum()),
         capacity: 8,
+        ...pos,
       }),
     );
   }

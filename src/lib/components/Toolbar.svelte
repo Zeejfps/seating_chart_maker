@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getTables, getGuests, getState, replaceAll } from "../state.svelte";
+  import { getTables, getGuests, getState, replaceAll, getNextTableNum } from "../state.svelte";
   import {
     getCanUndo,
     getCanRedo,
@@ -25,25 +25,31 @@
   let showExportMenu = $state(false);
   let showImportMenu = $state(false);
 
-  function getNextTableNum(): number {
-    let max = 0;
-    for (const t of getTables()) {
-      const n = parseInt(t.name, 10);
-      if (!isNaN(n) && n > max) max = n;
-    }
-    return max + 1;
-  }
-
   function handleBulkCreate() {
     if (bulkCount < 1) return;
     const cmds = [];
     const startNum = getNextTableNum();
+    const SPACING = 150;
+    const GRID = 50;
+    const COLS = Math.floor(3000 / SPACING);
+    const occupied = new Set(getTables().map((t) => `${t.x},${t.y}`));
+    let slot = 0;
     for (let i = 0; i < bulkCount; i++) {
+      let x: number, y: number;
+      while (true) {
+        x = Math.round(((slot % COLS) * SPACING + 100) / GRID) * GRID;
+        y = Math.round((Math.floor(slot / COLS) * SPACING + 100) / GRID) * GRID;
+        slot++;
+        if (!occupied.has(`${x},${y}`)) break;
+      }
+      occupied.add(`${x},${y}`);
       cmds.push(
         new AddTableCommand({
           id: crypto.randomUUID(),
           name: String(startNum + i),
           capacity: 8,
+          x,
+          y,
         }),
       );
     }

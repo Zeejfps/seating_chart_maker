@@ -1,6 +1,16 @@
 import type { ChartState, Guest, Snapshot, Table } from "./types";
 
 const STORAGE_KEY = "seating-chart-v1";
+const GRID_SNAP = 50;
+const TABLE_SPACING = 150;
+
+function backfillTablePositions(tables: Table[]): Table[] {
+  return tables.map((t, i) => ({
+    ...t,
+    x: t.x ?? Math.round(((i % 10) * TABLE_SPACING + 100) / GRID_SNAP) * GRID_SNAP,
+    y: t.y ?? Math.round((Math.floor(i / 10) * TABLE_SPACING + 100) / GRID_SNAP) * GRID_SNAP,
+  }));
+}
 
 export function saveToLocalStorage(state: ChartState): void {
   try {
@@ -16,6 +26,7 @@ export function loadFromLocalStorage(): ChartState | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!isValidChartState(parsed)) return null;
+    parsed.tables = backfillTablePositions(parsed.tables);
     return parsed;
   } catch {
     return null;
@@ -40,7 +51,7 @@ export async function importSnapshot(file: File): Promise<ChartState> {
   if (!isValidSnapshot(parsed)) {
     throw new Error("Invalid snapshot file");
   }
-  return { guests: parsed.guests, tables: parsed.tables };
+  return { guests: parsed.guests, tables: backfillTablePositions(parsed.tables) };
 }
 
 export function exportGuestListCsv(guests: Guest[], tables: Table[]): void {

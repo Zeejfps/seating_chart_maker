@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { getGuests, getState, replaceAll } from "./lib/state.svelte";
+  import { getGuests, getTables, getState, replaceAll } from "./lib/state.svelte";
   import {
     undo,
     redo,
@@ -11,6 +11,7 @@
   import {
     AddGuestCommand,
     RemoveGuestCommand,
+    RemoveTableCommand,
     BatchCommand,
   } from "./lib/commands";
   import { detectMergeChanges } from "./lib/csv";
@@ -19,9 +20,12 @@
   import StatsBar from "./lib/components/StatsBar.svelte";
   import Sidebar from "./lib/components/Sidebar.svelte";
   import TableGrid from "./lib/components/TableGrid.svelte";
+  import FloorPlan from "./lib/components/FloorPlan.svelte";
   import Modal from "./lib/components/Modal.svelte";
 
   let selectedGuestId: string | null = $state(null);
+  let activeTab: "cards" | "floorplan" = $state("cards");
+  let selectedTableId: string | null = $state(null);
   let initialized = $state(false);
 
   // Modal state
@@ -51,6 +55,15 @@
       return;
     if (e.key === "Escape") {
       selectedGuestId = null;
+      selectedTableId = null;
+      return;
+    }
+    if (e.key === "Delete" && selectedTableId && activeTab === "floorplan") {
+      const table = getTables().find((t) => t.id === selectedTableId);
+      if (table) {
+        executeCommand(new RemoveTableCommand(table));
+        selectedTableId = null;
+      }
       return;
     }
     if (e.ctrlKey && e.key === "z") {
@@ -127,10 +140,25 @@
   onselect={(id) => (selectedGuestId = selectedGuestId === id ? null : id)}
   onshowmodal={showModal}
 />
-<TableGrid
-  {selectedGuestId}
-  onclearselection={() => (selectedGuestId = null)}
-/>
+<div class="main-area">
+  <div class="view-tabs">
+    <button class:active={activeTab === "cards"} onclick={() => { activeTab = "cards"; selectedTableId = null; }}>Card View</button>
+    <button class:active={activeTab === "floorplan"} onclick={() => { activeTab = "floorplan"; }}>Floor Plan</button>
+  </div>
+  {#if activeTab === "cards"}
+    <TableGrid
+      {selectedGuestId}
+      onclearselection={() => (selectedGuestId = null)}
+    />
+  {:else}
+    <FloorPlan
+      {selectedGuestId}
+      onclearselection={() => (selectedGuestId = null)}
+      {selectedTableId}
+      onselecttable={(id) => (selectedTableId = id)}
+    />
+  {/if}
+</div>
 
 {#if modalType === "csv-import"}
   <Modal title="Import Guest List" onclose={closeModal}>

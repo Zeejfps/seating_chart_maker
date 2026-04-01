@@ -65,6 +65,30 @@ function reorderGuests(orderedIds: string[]) {
   });
 }
 
+function getNextTableNum(): number {
+  let max = 0;
+  for (const t of _tables) {
+    const n = parseInt(t.name, 10);
+    if (!isNaN(n) && n > max) max = n;
+  }
+  return max + 1;
+}
+
+function getNextTablePosition(): { x: number; y: number } {
+  const SPACING = 150;
+  const GRID = 50;
+  const COLS = Math.floor(3000 / SPACING);
+  const occupied = new Set(_tables.map((t) => `${t.x},${t.y}`));
+  for (let i = 0; i < 1000; i++) {
+    const x = Math.round(((i % COLS) * SPACING + 100) / GRID) * GRID;
+    const y = Math.round((Math.floor(i / COLS) * SPACING + 100) / GRID) * GRID;
+    if (!occupied.has(`${x},${y}`)) {
+      return { x, y };
+    }
+  }
+  return { x: 100, y: 100 };
+}
+
 function replaceAll(state: ChartState) {
   _guests = state.guests;
   _tables = state.tables;
@@ -88,4 +112,6 @@ export {
   reorderGuests,
   replaceAll,
   getState,
+  getNextTableNum,
+  getNextTablePosition,
 };

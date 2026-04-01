@@ -158,6 +158,23 @@ export class ReorderGuestsCommand implements Command {
   }
 }
 
+export class MoveTableCommand implements Command {
+  description = "Move table";
+  constructor(
+    private tableId: string,
+    private oldX: number,
+    private oldY: number,
+    private newX: number,
+    private newY: number,
+  ) {}
+  execute() {
+    updateTable(this.tableId, { x: this.newX, y: this.newY });
+  }
+  undo() {
+    updateTable(this.tableId, { x: this.oldX, y: this.oldY });
+  }
+}
+
 export class BatchCommand implements Command {
   description: string;
   constructor(
