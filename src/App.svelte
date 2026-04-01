@@ -24,7 +24,7 @@
   import Modal from "./lib/components/Modal.svelte";
 
   let selectedGuestId: string | null = $state(null);
-  let activeTab: "cards" | "floorplan" = $state("cards");
+  let activeTab: "cards" | "floorplan" = $state("floorplan");
   let selectedTableId: string | null = $state(null);
   let initialized = $state(false);
   let floorPlanApi: { panToTable: (tableId: string) => void } | null = $state(null);
