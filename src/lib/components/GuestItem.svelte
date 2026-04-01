@@ -61,12 +61,19 @@
   }
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 <div
   class="guest-item"
   class:selected={guest.id === selectedGuestId}
+  role="button"
+  tabindex="0"
   onclick={handleClick}
   ondblclick={handleDblClick}
+  onkeydown={(e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleClick();
+    }
+  }}
 >
   <span class="grip-handle"></span>
   {#if editing}

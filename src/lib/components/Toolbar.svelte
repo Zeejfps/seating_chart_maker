@@ -116,7 +116,6 @@
   <div class="toolbar-separator"></div>
 
   <div class="toolbar-group">
-    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div class="dropdown-wrap">
       <button
         onclick={(e) => {
@@ -126,14 +125,12 @@
         }}>Export</button
       >
       {#if showExportMenu}
-        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-        <div class="dropdown-menu" onclick={(e) => e.stopPropagation()}>
+        <div class="dropdown-menu" role="menu">
           <button onclick={handleExportSnapshot}>JSON Snapshot</button>
           <button onclick={handleExportCsv}>Guest List CSV</button>
         </div>
       {/if}
     </div>
-    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div class="dropdown-wrap">
       <button
         onclick={(e) => {
@@ -143,8 +140,7 @@
         }}>Import</button
       >
       {#if showImportMenu}
-        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-        <div class="dropdown-menu" onclick={(e) => e.stopPropagation()}>
+        <div class="dropdown-menu" role="menu">
           <button onclick={handleImportSnapshot}>JSON Snapshot</button>
         </div>
       {/if}

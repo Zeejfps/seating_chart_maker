@@ -203,8 +203,9 @@
   </div>
 
   <div class="table-card-footer">
-    <label>Seats:</label>
+    <label for="seats-{table.id}">Seats:</label>
     <input
+      id="seats-{table.id}"
       type="number"
       min="1"
       value={table.capacity}
