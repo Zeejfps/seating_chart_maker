@@ -811,6 +811,7 @@ input:focus {
 
 .table-group {
   margin-bottom: 2px;
+  position: relative;
 }
 
 .table-subheader {
@@ -818,6 +819,24 @@ input:focus {
   align-items: center;
   width: 100%;
   padding-left: 20px;
+  position: relative;
+}
+
+.header-drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.header-drop-overlay > * {
+  display: none;
+}
+
+.table-subheader.header-drop-highlight {
+  background-color: var(--accent-bg);
+  outline: 2px solid var(--accent-border);
+  border-radius: 4px;
 }
 
 .table-toggle {
@@ -888,15 +907,6 @@ input:focus {
   height: 0;
   padding: 0;
   overflow: hidden;
-}
-
-.assigned-guest-list.collapsed.dnd-accepting {
-  min-height: 28px;
-  height: auto;
-  padding: 2px 8px;
-  margin: 0 8px 4px 20px;
-  border: 1.5px dashed var(--accent-border);
-  border-radius: 4px;
 }
 
 .table-badge {

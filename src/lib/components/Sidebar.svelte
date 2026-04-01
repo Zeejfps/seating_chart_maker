@@ -11,7 +11,7 @@
   } from "../commands";
   import type { Guest, Table } from "../types";
   import GuestItem from "./GuestItem.svelte";
-  import { dndzone } from "svelte-dnd-action";
+  import { dndzone, TRIGGERS } from "svelte-dnd-action";
   import { parseCsv } from "../csv";
 
   interface Props {
@@ -83,6 +83,8 @@
   // Local items for assigned DnD zones
   let localAssignedByTable: Map<string, Guest[]> = $state(new Map());
   let draggingAssignedTable: string | null = $state(null);
+  let headerDropTable: string | null = $state(null);
+  let headerOverlayItems: Map<string, {id: string}[]> = $state(new Map());
 
   $effect(() => {
     if (!draggingAssignedTable) {
@@ -104,6 +106,7 @@
 
   function handleAssignedFinalize(tableId: string, e: CustomEvent) {
     draggingAssignedTable = null;
+    headerDropTable = null;
     setDndActive(false);
     const newItems: Guest[] = e.detail.items;
     for (const item of newItems) {
@@ -119,6 +122,38 @@
     const current = new Map(localAssignedByTable);
     current.set(tableId, newItems);
     localAssignedByTable = current;
+    onselect(null);
+  }
+
+  function handleHeaderConsider(tableId: string, e: CustomEvent) {
+    const trigger = e.detail.info.trigger;
+    setDndActive(true);
+    if (trigger === TRIGGERS.DRAGGED_ENTERED) {
+      headerDropTable = tableId;
+    } else if (trigger === TRIGGERS.DRAGGED_LEFT || trigger === TRIGGERS.DRAGGED_LEFT_ALL) {
+      if (headerDropTable === tableId) headerDropTable = null;
+    }
+    const current = new Map(headerOverlayItems);
+    current.set(tableId, e.detail.items);
+    headerOverlayItems = current;
+  }
+
+  function handleHeaderFinalize(tableId: string, e: CustomEvent) {
+    headerDropTable = null;
+    setDndActive(false);
+    const newItems: {id: string}[] = e.detail.items;
+    for (const item of newItems) {
+      const original = getGuests().find((g) => g.id === item.id);
+      if (original && original.tableId !== tableId) {
+        executeCommand(new AssignGuestCommand(item.id, tableId, original.tableId));
+      }
+    }
+    if (!isTableExpanded(tableId)) {
+      toggleTable(tableId);
+    }
+    const current = new Map(headerOverlayItems);
+    current.set(tableId, []);
+    headerOverlayItems = current;
     onselect(null);
   }
 
@@ -200,12 +235,15 @@
 
   function handleDndConsider(e: CustomEvent) {
     dragging = true;
+    draggingAssignedTable = null;
     setDndActive(true);
     localItems = e.detail.items;
   }
 
   function handleDndFinalize(e: CustomEvent) {
     dragging = false;
+    draggingAssignedTable = null;
+    headerDropTable = null;
     setDndActive(false);
     const newItems: Guest[] = e.detail.items;
     let hadUnassignments = false;
@@ -266,7 +304,7 @@
       use:dndzone={{
         items: localItems,
         type: "guest",
-        centreDraggedOnCursor: true,
+        centreDraggedOnCursor: false,
         dropFromOthersDisabled: false,
         flipDurationMs: 150,
         morphDisabled: true,
@@ -311,7 +349,7 @@
             {@const items = localAssignedByTable.get(table.id) ?? []}
             {@const expanded = isTableExpanded(table.id)}
             <div class="table-group">
-              <div class="table-subheader">
+              <div class="table-subheader" class:header-drop-highlight={headerDropTable === table.id}>
                 <button class="table-toggle" onclick={() => toggleTable(table.id)}>
                   <span class="toggle-arrow" class:expanded>&#9654;</span>
                   <span class="table-name">Table {table.name}</span>
@@ -331,21 +369,34 @@
                     <line x1="12" y1="22" x2="12" y2="18"></line>
                   </svg>
                 </button>
+                <div
+                  class="header-drop-overlay"
+                  style:pointer-events={isDndActive() ? 'auto' : 'none'}
+                  use:dndzone={{
+                    items: headerOverlayItems.get(table.id) ?? [],
+                    type: "guest",
+                    dropFromOthersDisabled: false,
+                    dragDisabled: true,
+                    morphDisabled: true,
+                    flipDurationMs: 0,
+                    dropTargetStyle: {},
+                    dropTargetClasses: [],
+                    transformDraggedElement,
+                  }}
+                  onconsider={(e) => handleHeaderConsider(table.id, e)}
+                  onfinalize={(e) => handleHeaderFinalize(table.id, e)}
+                ></div>
               </div>
               <div
                 class="guest-list assigned-guest-list"
                 class:collapsed={!expanded}
-                class:dnd-accepting={!expanded && isDndActive()}
                 use:dndzone={{
                   items,
                   type: "guest",
-                  centreDraggedOnCursor: true,
+                  centreDraggedOnCursor: false,
                   flipDurationMs: 150,
                   morphDisabled: true,
-                  dropTargetStyle: {
-                    outline: "2px solid rgba(170, 59, 255, 0.5)",
-                    "background-color": "rgba(170, 59, 255, 0.05)",
-                  },
+                  dropTargetStyle: {},
                   transformDraggedElement,
                 }}
                 onconsider={(e) => handleAssignedConsider(table.id, e)}
