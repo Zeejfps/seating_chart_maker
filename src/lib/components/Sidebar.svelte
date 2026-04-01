@@ -301,10 +301,10 @@
           {#each filteredAssignedByTable as { table } (table.id)}
             {@const items = localAssignedByTable.get(table.id) ?? []}
             <div class="table-group">
-              <div class="table-subheader">
+              <button class="table-subheader" onclick={() => onpantotable(table.id)}>
                 <span class="table-name">{table.name}</span>
                 <span class="table-count">{items.length}/{table.capacity}</span>
-              </div>
+              </button>
               <div
                 class="guest-list assigned-guest-list"
                 use:dndzone={{
@@ -323,16 +323,7 @@
                 onfinalize={(e) => handleAssignedFinalize(table.id, e)}
               >
                 {#each items as guest (guest.id)}
-                  <GuestItem {guest} {selectedGuestId} onselect={(id) => onselect(id)}>
-                    {#snippet badge()}
-                      <button
-                        class="table-badge"
-                        onclick={(e) => { e.stopPropagation(); onpantotable(table.id); }}
-                      >
-                        {table.name}
-                      </button>
-                    {/snippet}
-                  </GuestItem>
+                  <GuestItem {guest} {selectedGuestId} onselect={(id) => onselect(id)} />
                 {/each}
               </div>
             </div>
