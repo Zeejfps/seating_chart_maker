@@ -160,6 +160,7 @@
   >
     {#each localItems as guest (guest.id)}
       <div class="guest-item">
+        <span class="grip-handle"></span>
         <span class="guest-name">{guest.name}</span>
         <button
           class="remove-btn"

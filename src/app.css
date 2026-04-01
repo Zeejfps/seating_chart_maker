@@ -233,12 +233,48 @@ input:focus {
   outline: 2px solid var(--accent-border);
 }
 
+.grip-handle {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 10px;
+  height: 14px;
+  opacity: 0.3;
+  cursor: grab;
+}
+
+.guest-item:hover .grip-handle {
+  opacity: 0.6;
+}
+
+.grip-handle::before {
+  content: "";
+  display: block;
+  width: 10px;
+  height: 14px;
+  background-image: radial-gradient(
+    circle,
+    currentColor 1.2px,
+    transparent 1.2px
+  );
+  background-size: 5px 5px;
+  background-position: 0 0;
+}
+
 .guest-item .guest-name {
   flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.guest-item .rename-input {
+  flex: 1;
+  min-width: 0;
+  cursor: text;
+  font-size: inherit;
+  padding: 0 3px;
 }
 
 .guest-item .remove-btn {
