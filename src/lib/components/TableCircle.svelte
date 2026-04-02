@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Guest, Table } from "../types";
-  import { getCapacityStatus } from "../helpers";
+  import CapacityBadge from "./CapacityBadge.svelte";
   import { dndzone } from "svelte-dnd-action";
 
   interface Props {
@@ -32,8 +32,6 @@
     ondndconsider,
     ondndfinalize,
   }: Props = $props();
-
-  let capacityStatus = $derived(getCapacityStatus(guestCount, table.capacity));
 </script>
 
 <div
@@ -46,9 +44,7 @@
   {onclick}
 >
   <span class="table-circle-name">{table.name}</span>
-  <span class="capacity-badge {capacityStatus}"
-    >{guestCount}/{table.capacity}</span
-  >
+  <CapacityBadge count={guestCount} capacity={table.capacity} size="small" />
   <!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
   {#each Array(table.capacity) as _seat, i (i)}
     {@const angle = (2 * Math.PI * i) / table.capacity - Math.PI / 2}
@@ -151,27 +147,5 @@
     font-weight: 600;
     color: var(--text-h);
     line-height: 1.2;
-  }
-
-  .capacity-badge {
-    font-size: 11px;
-    font-weight: 600;
-    padding: 1px 6px;
-    border-radius: 8px;
-  }
-
-  .capacity-badge.under {
-    color: var(--text);
-    background: transparent;
-  }
-
-  .capacity-badge.at {
-    color: var(--warning-yellow);
-    background: rgba(245, 158, 11, 0.1);
-  }
-
-  .capacity-badge.over {
-    color: var(--warning-red);
-    background: rgba(239, 68, 68, 0.1);
   }
 </style>

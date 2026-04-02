@@ -201,15 +201,4 @@
     padding: 8px;
     min-height: 60px;
   }
-
-  .empty-state {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text);
-    font-size: 13px;
-    padding: 20px;
-    text-align: center;
-    opacity: 0.7;
-  }
 </style>

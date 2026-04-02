@@ -8,10 +8,18 @@
   interface Props {
     guest: Guest;
     showRemove?: boolean;
+    compact?: boolean;
     badge?: Snippet;
+    onremove?: (guest: Guest) => void;
   }
 
-  let { guest, showRemove = true, badge }: Props = $props();
+  let {
+    guest,
+    showRemove = true,
+    compact = false,
+    badge,
+    onremove,
+  }: Props = $props();
 
   let editing = $state(false);
   let editValue = $state("");
@@ -46,7 +54,9 @@
 
   function handleRemove(e: MouseEvent) {
     e.stopPropagation();
-    if (confirm(`Remove "${guest.name}" from the guest list?`)) {
+    if (onremove) {
+      onremove(guest);
+    } else if (confirm(`Remove "${guest.name}" from the guest list?`)) {
       executeCommand(new RemoveGuestCommand(guest));
     }
   }
@@ -60,6 +70,7 @@
 
 <div
   class="guest-item"
+  class:compact
   role="button"
   tabindex="0"
   ondblclick={handleDblClick}
@@ -177,15 +188,8 @@
     color: var(--warning-red);
   }
 
-  /* Shadow placeholder during drag — :global needed because dnd library adds the attribute */
-  :global(.guest-item[data-is-dnd-shadow-item-internal]) {
-    opacity: 0.3;
-    border: 1.5px dashed var(--accent-border);
-    background: var(--accent-bg);
-    visibility: visible !important;
-  }
-
-  :global(.guest-item[data-is-dnd-shadow-item-internal]) :global(*) {
-    visibility: hidden;
+  .guest-item.compact {
+    padding: 4px 6px;
+    font-size: 13px;
   }
 </style>

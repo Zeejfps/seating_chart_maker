@@ -8,7 +8,9 @@
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
   --warning-yellow: #f59e0b;
+  --warning-yellow-bg: rgba(245, 158, 11, 0.1);
   --warning-red: #ef4444;
+  --warning-red-bg: rgba(239, 68, 68, 0.1);
   --success-green: #22c55e;
   --sidebar-width: 300px;
 
@@ -115,4 +117,27 @@ input[type="search"] {
 
 input:focus {
   border-color: var(--accent-border);
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  font-size: 13px;
+  padding: 20px;
+  text-align: center;
+  opacity: 0.7;
+}
+
+/* DnD shadow placeholder during drag */
+.guest-item[data-is-dnd-shadow-item-internal] {
+  opacity: 0.3;
+  border: 1.5px dashed var(--accent-border);
+  background: var(--accent-bg);
+  visibility: visible !important;
+}
+
+.guest-item[data-is-dnd-shadow-item-internal] * {
+  visibility: hidden;
 }
