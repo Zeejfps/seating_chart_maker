@@ -1,13 +1,15 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { getTables, getGuestsByTable } from "../state.svelte";
+  import { getTables, getGuestsByTable, setDndActive } from "../state.svelte";
   import { executeCommand } from "../command-history.svelte";
   import {
     RenameTableCommand,
     RenameGuestCommand,
     UnassignGuestCommand,
   } from "../commands";
+  import { reorderIfChanged, transformDraggedElement } from "../dnd-utils";
   import { addTableAt } from "../table-factory";
+  import { dndzone } from "svelte-dnd-action";
   import type { Guest, Table, ModalState } from "../types";
 
   export type ContextMenuState =
@@ -93,6 +95,32 @@
   let guests: Guest[] = $derived(
     tableId ? (getGuestsByTable().get(tableId) ?? []) : [],
   );
+
+  // Local copy for DnD reordering
+  let localGuests: Guest[] = $state([]);
+  let draggingGuest = $state(false);
+
+  $effect(() => {
+    const items = guests.map((g) => ({ ...g }));
+    if (!draggingGuest) localGuests = items;
+  });
+
+  function handleGuestDndConsider(e: CustomEvent) {
+    draggingGuest = true;
+    setDndActive(true);
+    localGuests = e.detail.items;
+  }
+
+  function handleGuestDndFinalize(e: CustomEvent) {
+    draggingGuest = false;
+    setDndActive(false);
+    const newItems: Guest[] = e.detail.items;
+    // Only reorder if same number of items (guest stayed in this list)
+    if (newItems.length === guests.length) {
+      reorderIfChanged(newItems, guests);
+    }
+    localGuests = newItems;
+  }
 
   function startRenameTable() {
     if (!table) return;
@@ -210,32 +238,71 @@
         >Delete Table</button
       >
 
-      {#if guests.length > 0}
+      {#if localGuests.length > 0}
         <div class="menu-divider"></div>
-        <div class="menu-subheader">Guests ({guests.length})</div>
-        {#each guests as guest (guest.id)}
-          <div class="menu-guest">
-            {#if editingGuestId === guest.id}
-              <input
-                class="rename-guest-input menu-input"
-                data-guest-id={guest.id}
-                type="text"
-                bind:value={guestNameValue}
-                onblur={() => commitRenameGuest(guest)}
-                onkeydown={(e) => handleGuestNameKeydown(e, guest)}
-              />
-            {:else}
-              <span
-                class="guest-name"
-                ondblclick={() => startRenameGuest(guest)}>{guest.name}</span
-              >
-            {/if}
-            <div class="guest-actions">
-              {#if editingGuestId !== guest.id}
+        <div class="menu-subheader">Guests ({localGuests.length})</div>
+        <div
+          class="menu-guest-list"
+          use:dndzone={{
+            items: localGuests,
+            type: "guest",
+            flipDurationMs: 150,
+            morphDisabled: true,
+            centreDraggedOnCursor: false,
+            dropFromOthersDisabled: true,
+            transformDraggedElement,
+            dropTargetStyle: {
+              outline: "2px solid rgba(170, 59, 255, 0.5)",
+              "background-color": "rgba(170, 59, 255, 0.05)",
+            },
+          }}
+          onconsider={handleGuestDndConsider}
+          onfinalize={handleGuestDndFinalize}
+        >
+          {#each localGuests as guest (guest.id)}
+            <div class="menu-guest">
+              <span class="grip-handle"></span>
+              {#if editingGuestId === guest.id}
+                <input
+                  class="rename-guest-input menu-input"
+                  data-guest-id={guest.id}
+                  type="text"
+                  bind:value={guestNameValue}
+                  onblur={() => commitRenameGuest(guest)}
+                  onkeydown={(e) => handleGuestNameKeydown(e, guest)}
+                />
+              {:else}
+                <span
+                  class="guest-name"
+                  ondblclick={() => startRenameGuest(guest)}>{guest.name}</span
+                >
+              {/if}
+              <div class="guest-actions">
+                {#if editingGuestId !== guest.id}
+                  <button
+                    class="guest-action-btn"
+                    title="Rename"
+                    onclick={() => startRenameGuest(guest)}
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      ><path
+                        d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"
+                      /></svg
+                    >
+                  </button>
+                {/if}
                 <button
                   class="guest-action-btn"
-                  title="Rename"
-                  onclick={() => startRenameGuest(guest)}
+                  title="Unassign"
+                  onclick={() => handleUnassignGuest(guest)}
                 >
                   <svg
                     width="12"
@@ -246,51 +313,32 @@
                     stroke-width="2"
                     stroke-linecap="round"
                     stroke-linejoin="round"
-                    ><path
-                      d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"
-                    /></svg
+                    ><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg
                   >
                 </button>
-              {/if}
-              <button
-                class="guest-action-btn"
-                title="Unassign"
-                onclick={() => handleUnassignGuest(guest)}
-              >
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  ><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg
+                <button
+                  class="guest-action-btn delete"
+                  title="Delete"
+                  onclick={() => handleDeleteGuest(guest)}
                 >
-              </button>
-              <button
-                class="guest-action-btn delete"
-                title="Delete"
-                onclick={() => handleDeleteGuest(guest)}
-              >
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  ><path d="M3 6h18" /><path
-                    d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"
-                  /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg
-                >
-              </button>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    ><path d="M3 6h18" /><path
+                      d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"
+                    /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg
+                  >
+                </button>
+              </div>
             </div>
-          </div>
-        {/each}
+          {/each}
+        </div>
       {/if}
     {:else if menu.context.type === "canvas"}
       <button class="menu-item" onclick={handleAddTableHere}
@@ -373,11 +421,16 @@
     outline: none;
   }
 
+  .menu-guest-list {
+    padding: 0;
+  }
+
   .menu-guest {
     display: flex;
     align-items: center;
     gap: 4px;
     padding: 3px 12px;
+    cursor: grab;
   }
 
   .menu-guest:hover {
@@ -431,5 +484,45 @@
   .guest-action-btn.delete:hover {
     color: var(--warning-red);
     background: var(--warning-red-bg);
+  }
+
+  .grip-handle {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    width: 8px;
+    height: 12px;
+    opacity: 0.25;
+    cursor: grab;
+  }
+
+  .menu-guest:hover .grip-handle {
+    opacity: 0.5;
+  }
+
+  .grip-handle::before {
+    content: "";
+    display: block;
+    width: 8px;
+    height: 12px;
+    background-image: radial-gradient(
+      circle,
+      currentColor 1px,
+      transparent 1px
+    );
+    background-size: 4px 4px;
+    background-position: 0 0;
+  }
+
+  /* DnD shadow placeholder */
+  .menu-guest:global([data-is-dnd-shadow-item-internal]) {
+    opacity: 0.3;
+    border: 1.5px dashed var(--accent-border);
+    background: var(--accent-bg);
+    visibility: visible !important;
+  }
+
+  .menu-guest:global([data-is-dnd-shadow-item-internal]) * {
+    visibility: hidden;
   }
 </style>
