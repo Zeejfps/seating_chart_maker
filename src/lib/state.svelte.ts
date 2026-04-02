@@ -1,4 +1,5 @@
 import type { Guest, Table, ChartState } from "./types";
+import { findOpenSlot } from "./grid";
 
 let _guests: Guest[] = $state([]);
 let _tables: Table[] = $state([]);
@@ -88,21 +89,8 @@ function getNextTableNum(): number {
 }
 
 function getNextTablePosition(): { x: number; y: number } {
-  const SPACING = 150;
-  const GRID = 50;
-  const COLS = 10;
-  const START_X = 1500 - Math.floor(COLS / 2) * SPACING; // center of 3000px canvas
-  const START_Y = 1000 - 2 * SPACING; // center of 2000px canvas
   const occupied = new Set(_tables.map((t) => `${t.x},${t.y}`));
-  for (let i = 0; i < 1000; i++) {
-    const x = Math.round((START_X + (i % COLS) * SPACING) / GRID) * GRID;
-    const y =
-      Math.round((START_Y + Math.floor(i / COLS) * SPACING) / GRID) * GRID;
-    if (!occupied.has(`${x},${y}`)) {
-      return { x, y };
-    }
-  }
-  return { x: 1500, y: 1000 };
+  return findOpenSlot(occupied);
 }
 
 function replaceAll(state: ChartState) {

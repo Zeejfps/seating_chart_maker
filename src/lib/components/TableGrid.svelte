@@ -1,12 +1,8 @@
 <script lang="ts">
-  import {
-    getTables,
-    getGuestsByTable,
-    getNextTablePosition,
-    getNextTableNum,
-  } from "../state.svelte";
+  import { getTables, getGuestsByTable } from "../state.svelte";
   import { executeCommand } from "../command-history.svelte";
   import { AddTableCommand } from "../commands";
+  import { buildNewTable } from "../table-factory";
   import TableCard from "./TableCard.svelte";
 
   interface Props {
@@ -16,15 +12,7 @@
   let { onshowmodal }: Props = $props();
 
   function handleAddTable() {
-    const pos = getNextTablePosition();
-    executeCommand(
-      new AddTableCommand({
-        id: crypto.randomUUID(),
-        name: String(getNextTableNum()),
-        capacity: 8,
-        ...pos,
-      }),
-    );
+    executeCommand(new AddTableCommand(buildNewTable()));
   }
 </script>
 

@@ -1,22 +1,19 @@
 import type { ChartState, Guest, Snapshot, Table } from "./types";
+import {
+  snapToGrid,
+  gridStartPosition,
+  TABLE_SPACING,
+  GRID_COLS,
+} from "./grid";
 
 const STORAGE_KEY = "seating-chart-v1";
-const GRID_SNAP = 50;
-const TABLE_SPACING = 150;
 
 function backfillTablePositions(tables: Table[]): Table[] {
-  const COLS = 10;
-  const startX = 1500 - Math.floor(COLS / 2) * TABLE_SPACING;
-  const startY = 1000 - 2 * TABLE_SPACING;
+  const { startX, startY } = gridStartPosition();
   return tables.map((t, i) => ({
     ...t,
-    x:
-      t.x ??
-      Math.round((startX + (i % COLS) * TABLE_SPACING) / GRID_SNAP) * GRID_SNAP,
-    y:
-      t.y ??
-      Math.round((startY + Math.floor(i / COLS) * TABLE_SPACING) / GRID_SNAP) *
-        GRID_SNAP,
+    x: t.x ?? snapToGrid(startX + (i % GRID_COLS) * TABLE_SPACING),
+    y: t.y ?? snapToGrid(startY + Math.floor(i / GRID_COLS) * TABLE_SPACING),
   }));
 }
 

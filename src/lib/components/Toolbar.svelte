@@ -20,6 +20,7 @@
     importSnapshot,
     exportGuestListCsv,
   } from "../persistence";
+  import { findOpenSlots } from "../grid";
 
   interface Props {
     onshowmodal: (type: string, data?: unknown) => void;
@@ -33,36 +34,18 @@
 
   function handleBulkCreate() {
     if (bulkCount < 1) return;
-    const cmds = [];
     const startNum = getNextTableNum();
-    const SPACING = 150;
-    const GRID = 50;
-    const COLS = 10;
-    const startX = 1500 - Math.floor(COLS / 2) * SPACING;
-    const startY = 1000 - 2 * SPACING;
     const occupied = new Set(getTables().map((t) => `${t.x},${t.y}`));
-    let slot = 0;
-    for (let i = 0; i < bulkCount; i++) {
-      let x: number, y: number;
-      while (true) {
-        x = Math.round((startX + (slot % COLS) * SPACING) / GRID) * GRID;
-        y =
-          Math.round((startY + Math.floor(slot / COLS) * SPACING) / GRID) *
-          GRID;
-        slot++;
-        if (!occupied.has(`${x},${y}`)) break;
-      }
-      occupied.add(`${x},${y}`);
-      cmds.push(
+    const slots = findOpenSlots(occupied, bulkCount);
+    const cmds = slots.map(
+      (pos, i) =>
         new AddTableCommand({
           id: crypto.randomUUID(),
           name: String(startNum + i),
           capacity: 8,
-          x,
-          y,
+          ...pos,
         }),
-      );
-    }
+    );
     executeCommand(new BatchCommand(cmds, `Create ${bulkCount} tables`));
   }
 

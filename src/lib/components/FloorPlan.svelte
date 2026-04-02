@@ -1,21 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import {
-    getTables,
-    getGuestsByTable,
-    getGuests,
-    getNextTablePosition,
-    getNextTableNum,
-    setDndActive,
-  } from "../state.svelte";
+  import { getTables, getGuestsByTable, setDndActive } from "../state.svelte";
   import { executeCommand } from "../command-history.svelte";
-  import {
-    AddTableCommand,
-    AssignGuestCommand,
-    MoveTableCommand,
-  } from "../commands";
+  import { AddTableCommand, MoveTableCommand } from "../commands";
+  import { CANVAS_W, CANVAS_H, snapToGrid } from "../grid";
+  import { assignGuestIfChanged } from "../dnd-utils";
+  import { buildNewTable } from "../table-factory";
   import type { Guest } from "../types";
-  import { dndzone } from "svelte-dnd-action";
+  import TableCircle from "./TableCircle.svelte";
 
   interface Props {
     selectedTableId: string | null;
@@ -24,10 +16,6 @@
   }
 
   let { selectedTableId, onselecttable, onready }: Props = $props();
-
-  const CANVAS_W = 3000;
-  const CANVAS_H = 2000;
-  const GRID_SIZE = 50;
 
   let viewportEl: HTMLDivElement | undefined = $state();
   let zoom = $state(1);
@@ -50,10 +38,6 @@
   let dragOffsetX = 0;
   let dragOffsetY = 0;
   let didDragMove = false;
-
-  function snapToGrid(val: number): number {
-    return Math.round(val / GRID_SIZE) * GRID_SIZE;
-  }
 
   function viewportToCanvas(
     clientX: number,
@@ -235,17 +219,8 @@
     panY = rect.height / 2 - centerY * newZoom;
   }
 
-  // --- Add table ---
   function handleAddTable() {
-    const pos = getNextTablePosition();
-    executeCommand(
-      new AddTableCommand({
-        id: crypto.randomUUID(),
-        name: String(getNextTableNum()),
-        capacity: 8,
-        ...pos,
-      }),
-    );
+    executeCommand(new AddTableCommand(buildNewTable()));
   }
 
   // --- DND for guest drops ---
@@ -280,12 +255,7 @@
     setDndActive(false);
     const newItems: Guest[] = e.detail.items;
     for (const item of newItems) {
-      const original = getGuests().find((g) => g.id === item.id);
-      if (original && original.tableId !== tableId) {
-        executeCommand(
-          new AssignGuestCommand(original.id, tableId, original.tableId),
-        );
-      }
+      assignGuestIfChanged(item.id, tableId);
     }
     const newMap = new Map(dndItemsByTable);
     newMap.set(tableId, newItems);
@@ -341,69 +311,21 @@
     style="width:{CANVAS_W}px; height:{CANVAS_H}px; transform: translate({panX}px, {panY}px) scale({zoom});"
   >
     {#each getTables() as table (table.id)}
-      {@const guests = getGuestsByTable().get(table.id) ?? []}
       {@const isDragging = dragTableId === table.id}
-      {@const tx = isDragging ? dragCurrentX : table.x}
-      {@const ty = isDragging ? dragCurrentY : table.y}
-      {@const count = guests.length}
-      {@const capacityStatus =
-        count >= table.capacity
-          ? count > table.capacity
-            ? "over"
-            : "at"
-          : "under"}
-      {@const dndItems = dndItemsByTable.get(table.id) ?? []}
-      <div
-        class="table-circle"
-        class:selected={selectedTableId === table.id}
-        class:is-dragging={isDragging}
-        class:dnd-hover={dndDraggingTable === table.id}
-        style="left:{tx}px; top:{ty}px;"
+      <TableCircle
+        {table}
+        guestCount={(getGuestsByTable().get(table.id) ?? []).length}
+        dndItems={dndItemsByTable.get(table.id) ?? []}
+        isSelected={selectedTableId === table.id}
+        {isDragging}
+        isDndHover={dndDraggingTable === table.id}
+        x={isDragging ? dragCurrentX : table.x}
+        y={isDragging ? dragCurrentY : table.y}
         onmousedown={(e) => handleTableMouseDown(e, table.id)}
         onclick={(e) => handleTableClick(e, table.id)}
-      >
-        <span class="table-circle-name">{table.name}</span>
-        <span class="capacity-badge {capacityStatus}"
-          >{count}/{table.capacity}</span
-        >
-        <!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
-        {#each Array(table.capacity) as _seat, i (i)}
-          {@const angle = (2 * Math.PI * i) / table.capacity - Math.PI / 2}
-          {@const chairRadius = 58}
-          {@const cx = Math.cos(angle) * chairRadius}
-          {@const cy = Math.sin(angle) * chairRadius}
-          {@const isOccupied = i < count}
-          <div
-            class="chair"
-            class:occupied={isOccupied}
-            style="left: calc(50% + {cx}px - 6px); top: calc(50% + {cy}px - 6px);"
-          ></div>
-        {/each}
-        <!-- Hidden dndzone for guest drops -->
-        <div
-          style="position:absolute; inset:0; border-radius:50%; overflow:hidden;"
-          use:dndzone={{
-            items: dndItems,
-            type: "guest",
-            centreDraggedOnCursor: true,
-            flipDurationMs: 0,
-            morphDisabled: true,
-            dragDisabled: true,
-            dropTargetStyle: {},
-            dropTargetClasses: ["drag-over"],
-          }}
-          onconsider={(e) => handleDndConsider(table.id, e)}
-          onfinalize={(e) => handleDndFinalize(table.id, e)}
-        >
-          {#each dndItems as guest (guest.id)}
-            <div
-              style="position:absolute; opacity:0; pointer-events:none; width:1px; height:1px;"
-            >
-              {guest.name}
-            </div>
-          {/each}
-        </div>
-      </div>
+        ondndconsider={(e) => handleDndConsider(table.id, e)}
+        ondndfinalize={(e) => handleDndFinalize(table.id, e)}
+      />
     {/each}
   </div>
 
