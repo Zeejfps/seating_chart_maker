@@ -11,9 +11,10 @@
   import { exportSnapshot, importSnapshot, pickFile } from "../persistence";
   import { AddGuestCommand, BatchCommand } from "../commands";
   import { parseCsv } from "../csv";
+  import type { ModalState } from "../types";
 
   interface Props {
-    onshowmodal: (type: string, data?: unknown) => void;
+    onshowmodal: (modal: ModalState) => void;
   }
 
   let { onshowmodal }: Props = $props();
@@ -28,16 +29,16 @@
     try {
       const state = await importSnapshot(file);
       if (getGuests().length > 0 || getTables().length > 0) {
-        onshowmodal("snapshot-import", state);
+        onshowmodal({ type: "snapshot-import", state });
       } else {
         clearHistory();
         replaceAll(state);
       }
     } catch {
-      onshowmodal(
-        "error",
-        "Invalid snapshot file. Please check the file format.",
-      );
+      onshowmodal({
+        type: "error",
+        message: "Invalid snapshot file. Please check the file format.",
+      });
     }
   }
 
@@ -59,7 +60,7 @@
       );
       executeCommand(new BatchCommand(cmds, "Import guest list"));
     } else {
-      onshowmodal("csv-import", names);
+      onshowmodal({ type: "csv-import", names });
     }
   }
 </script>

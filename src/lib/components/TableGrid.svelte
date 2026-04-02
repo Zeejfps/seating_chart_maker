@@ -4,9 +4,10 @@
   import { AddTableCommand } from "../commands";
   import { buildNewTable } from "../table-factory";
   import TableCard from "./TableCard.svelte";
+  import type { ModalState } from "../types";
 
   interface Props {
-    onshowmodal: (type: string, data?: unknown) => void;
+    onshowmodal: (modal: ModalState) => void;
   }
 
   let { onshowmodal }: Props = $props();

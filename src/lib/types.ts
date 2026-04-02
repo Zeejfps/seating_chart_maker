@@ -28,3 +28,10 @@ export interface Snapshot {
   guests: Guest[];
   tables: Table[];
 }
+
+export type ModalState =
+  | { type: "delete-table"; table: Table }
+  | { type: "delete-guest"; guest: Guest }
+  | { type: "csv-import"; names: string[] }
+  | { type: "snapshot-import"; state: ChartState }
+  | { type: "error"; message: string };

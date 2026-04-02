@@ -21,7 +21,7 @@
     BatchCommand,
   } from "./lib/commands";
   import { detectMergeChanges } from "./lib/csv";
-  import type { ChartState, Guest, Table } from "./lib/types";
+  import type { ModalState } from "./lib/types";
   import Toolbar from "./lib/components/Toolbar.svelte";
   import StatsBar from "./lib/components/StatsBar.svelte";
   import Sidebar from "./lib/components/Sidebar.svelte";
@@ -44,8 +44,7 @@
   }
 
   // Modal state
-  let modalType: string | null = $state(null);
-  let modalData: unknown = $state(null);
+  let modal: ModalState | null = $state(null);
 
   onMount(() => {
     const saved = loadFromLocalStorage();
@@ -63,15 +62,15 @@
 
   // Keyboard shortcuts
   function handleDeleteTableConfirm() {
-    const table = modalData as Table;
-    executeCommand(new RemoveTableCommand(table));
-    if (selectedTableId === table.id) selectedTableId = null;
+    if (modal?.type !== "delete-table") return;
+    executeCommand(new RemoveTableCommand(modal.table));
+    if (selectedTableId === modal.table.id) selectedTableId = null;
     closeModal();
   }
 
   function handleDeleteGuestConfirm() {
-    const guest = modalData as Guest;
-    executeCommand(new RemoveGuestCommand(guest));
+    if (modal?.type !== "delete-guest") return;
+    executeCommand(new RemoveGuestCommand(modal.guest));
     closeModal();
   }
 
@@ -81,44 +80,49 @@
       e.target instanceof HTMLTextAreaElement
     )
       return;
-    if (modalType) return;
+    if (modal) return;
     if (e.key === "Escape") {
       selectedTableId = null;
       return;
     }
-    if (e.key === "Delete" && selectedTableId && activeTab === "floorplan") {
+    if (
+      (e.key === "Delete" || e.key === "Backspace") &&
+      selectedTableId &&
+      activeTab === "floorplan"
+    ) {
       const table = getTables().find((t) => t.id === selectedTableId);
       if (table) {
-        showModal("delete-table", table);
+        showModal({ type: "delete-table", table });
       }
       return;
     }
-    if (e.ctrlKey && e.key === "z") {
+    if ((e.ctrlKey || e.metaKey) && e.key === "z") {
       e.preventDefault();
       undo();
     }
-    if (e.ctrlKey && (e.key === "y" || (e.shiftKey && e.key === "Z"))) {
+    if (
+      (e.ctrlKey || e.metaKey) &&
+      (e.key === "y" || (e.shiftKey && e.key === "Z"))
+    ) {
       e.preventDefault();
       redo();
     }
   }
 
-  function showModal(type: string, data?: unknown) {
-    modalType = type;
-    modalData = data;
+  function showModal(m: ModalState) {
+    modal = m;
   }
 
   function closeModal() {
-    modalType = null;
-    modalData = null;
+    modal = null;
   }
 
   // CSV import: replace
   function handleCsvReplace() {
-    const names = modalData as string[];
+    if (modal?.type !== "csv-import") return;
     clearHistory();
     replaceAll({
-      guests: names.map((name) => ({
+      guests: modal.names.map((name) => ({
         id: crypto.randomUUID(),
         name,
         tableId: null,
@@ -130,8 +134,8 @@
 
   // CSV import: merge
   function handleCsvMerge() {
-    const names = modalData as string[];
-    const { toAdd, toRemove } = detectMergeChanges(getGuests(), names);
+    if (modal?.type !== "csv-import") return;
+    const { toAdd, toRemove } = detectMergeChanges(getGuests(), modal.names);
     const cmds = [
       ...toAdd.map(
         (name) =>
@@ -151,9 +155,9 @@
 
   // Snapshot import: confirm replace
   function handleSnapshotReplace() {
-    const state = modalData as ChartState;
+    if (modal?.type !== "snapshot-import") return;
     clearHistory();
-    replaceAll(state);
+    replaceAll(modal.state);
     closeModal();
   }
 </script>
@@ -194,7 +198,7 @@
   {/if}
 </div>
 
-{#if modalType === "csv-import"}
+{#if modal?.type === "csv-import"}
   <Modal title="Import Guest List" onclose={closeModal}>
     {#snippet children()}
       <p>
@@ -214,7 +218,7 @@
   </Modal>
 {/if}
 
-{#if modalType === "snapshot-import"}
+{#if modal?.type === "snapshot-import"}
   <Modal title="Import Snapshot" onclose={closeModal}>
     {#snippet children()}
       <p>This will replace all current data with the imported snapshot.</p>
@@ -226,8 +230,8 @@
   </Modal>
 {/if}
 
-{#if modalType === "delete-table"}
-  {@const table = modalData as Table}
+{#if modal?.type === "delete-table"}
+  {@const table = modal.table}
   {@const guests = getGuestsByTable().get(table.id) ?? []}
   <Modal title="Delete Table" onclose={closeModal}>
     {#snippet children()}
@@ -246,8 +250,8 @@
   </Modal>
 {/if}
 
-{#if modalType === "delete-guest"}
-  {@const guest = modalData as Guest}
+{#if modal?.type === "delete-guest"}
+  {@const guest = modal.guest}
   <Modal title="Delete Guest" onclose={closeModal}>
     {#snippet children()}
       <p>Delete "<strong>{guest.name}</strong>"?</p>
@@ -259,10 +263,11 @@
   </Modal>
 {/if}
 
-{#if modalType === "error"}
+{#if modal?.type === "error"}
+  {@const message = modal.message}
   <Modal title="Error" onclose={closeModal}>
     {#snippet children()}
-      <p>{modalData}</p>
+      <p>{message}</p>
     {/snippet}
     {#snippet actions()}
       <button onclick={closeModal}>OK</button>

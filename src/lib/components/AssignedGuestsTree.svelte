@@ -17,7 +17,7 @@
   import { AddTableCommand } from "../commands";
   import { transformDraggedElement, assignGuestIfChanged } from "../dnd-utils";
   import { buildNewTable } from "../table-factory";
-  import type { Guest, Table } from "../types";
+  import type { Guest, ModalState, Table } from "../types";
   import GuestItem from "./GuestItem.svelte";
   import TrashIcon from "./icons/TrashIcon.svelte";
   import CrosshairIcon from "./icons/CrosshairIcon.svelte";
@@ -26,7 +26,7 @@
   interface Props {
     searchQuery: string;
     selectedTableId: string | null;
-    onshowmodal: (type: string, data?: unknown) => void;
+    onshowmodal: (modal: ModalState) => void;
     onpantotable: (tableId: string) => void;
   }
 
@@ -256,7 +256,7 @@
                 tabindex="-1"
                 onclick={(e: MouseEvent) => {
                   e.stopPropagation();
-                  onshowmodal("delete-table", table);
+                  onshowmodal({ type: "delete-table", table });
                 }}
               >
                 <TrashIcon />

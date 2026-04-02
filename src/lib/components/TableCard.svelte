@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Guest, Table } from "../types";
+  import type { Guest, ModalState, Table } from "../types";
   import { executeCommand } from "../command-history.svelte";
   import {
     UnassignGuestCommand,
@@ -21,7 +21,7 @@
   interface Props {
     table: Table;
     tableGuests: Guest[];
-    onshowmodal: (type: string, data?: unknown) => void;
+    onshowmodal: (modal: ModalState) => void;
   }
 
   let { table, tableGuests, onshowmodal }: Props = $props();
@@ -49,7 +49,7 @@
   }
 
   function handleDelete() {
-    onshowmodal("delete-table", table);
+    onshowmodal({ type: "delete-table", table });
   }
 
   function handleDndConsider(e: CustomEvent) {

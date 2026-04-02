@@ -1,10 +1,11 @@
 <script lang="ts">
   import UnassignedGuestList from "./UnassignedGuestList.svelte";
   import AssignedGuestsTree from "./AssignedGuestsTree.svelte";
+  import type { ModalState } from "../types";
 
   interface Props {
     selectedTableId: string | null;
-    onshowmodal: (type: string, data?: unknown) => void;
+    onshowmodal: (modal: ModalState) => void;
     onpantotable: (tableId: string) => void;
   }
 

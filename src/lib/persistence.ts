@@ -1,4 +1,4 @@
-import type { ChartState, Snapshot, Table } from "./types";
+import type { ChartState, Guest, Snapshot, Table } from "./types";
 import {
   snapToGrid,
   gridStartPosition,
@@ -31,8 +31,9 @@ export function loadFromLocalStorage(): ChartState | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!isValidChartState(parsed)) return null;
-    parsed.tables = backfillTablePositions(parsed.tables);
-    return parsed;
+    const sanitized = sanitizeChartState(parsed);
+    sanitized.tables = backfillTablePositions(sanitized.tables);
+    return sanitized;
   } catch {
     return null;
   }
@@ -56,10 +57,9 @@ export async function importSnapshot(file: File): Promise<ChartState> {
   if (!isValidSnapshot(parsed)) {
     throw new Error("Invalid snapshot file");
   }
-  return {
-    guests: parsed.guests,
-    tables: backfillTablePositions(parsed.tables),
-  };
+  const sanitized = sanitizeChartState(parsed);
+  sanitized.tables = backfillTablePositions(sanitized.tables);
+  return sanitized;
 }
 
 /** Open a file picker dialog and return the selected file, or null if cancelled. */
@@ -69,6 +69,7 @@ export function pickFile(accept: string): Promise<File | null> {
     input.type = "file";
     input.accept = accept;
     input.onchange = () => resolve(input.files?.[0] ?? null);
+    input.addEventListener("cancel", () => resolve(null));
     input.click();
   });
 }
@@ -82,6 +83,40 @@ function downloadBlob(blob: Blob, filename: string) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+function isValidGuest(obj: unknown): boolean {
+  if (typeof obj !== "object" || obj === null) return false;
+  const o = obj as Record<string, unknown>;
+  return (
+    typeof o.id === "string" &&
+    typeof o.name === "string" &&
+    (o.tableId === null || typeof o.tableId === "string")
+  );
+}
+
+function isValidTable(obj: unknown): boolean {
+  if (typeof obj !== "object" || obj === null) return false;
+  const o = obj as Record<string, unknown>;
+  return (
+    typeof o.id === "string" &&
+    typeof o.name === "string" &&
+    typeof o.capacity === "number" &&
+    o.capacity > 0
+  );
+}
+
+function sanitizeChartState(state: {
+  guests: unknown[];
+  tables: unknown[];
+}): ChartState {
+  const tables = state.tables.filter(isValidTable) as Table[];
+  const tableIds = new Set(tables.map((t) => t.id));
+  const guests = (state.guests.filter(isValidGuest) as Guest[]).map((g) => ({
+    ...g,
+    tableId: g.tableId && tableIds.has(g.tableId) ? g.tableId : null,
+  }));
+  return { guests, tables };
 }
 
 function isValidChartState(obj: unknown): obj is ChartState {

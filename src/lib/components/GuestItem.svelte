@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import type { Guest } from "../types";
+  import type { Guest, ModalState } from "../types";
   import { executeCommand } from "../command-history.svelte";
   import { RenameGuestCommand, RemoveGuestCommand } from "../commands";
   import TrashIcon from "./icons/TrashIcon.svelte";
@@ -11,7 +11,7 @@
     compact?: boolean;
     badge?: Snippet;
     onremove?: (guest: Guest) => void;
-    onshowmodal?: (type: string, data?: unknown) => void;
+    onshowmodal?: (modal: ModalState) => void;
   }
 
   let {
@@ -59,7 +59,7 @@
     if (onremove) {
       onremove(guest);
     } else if (onshowmodal) {
-      onshowmodal("delete-guest", guest);
+      onshowmodal({ type: "delete-guest", guest });
     } else if (confirm(`Remove "${guest.name}" from the guest list?`)) {
       executeCommand(new RemoveGuestCommand(guest));
     }

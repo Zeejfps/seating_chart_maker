@@ -7,13 +7,13 @@
   import { executeCommand } from "../command-history.svelte";
   import { AddGuestCommand, UnassignGuestCommand } from "../commands";
   import { transformDraggedElement, reorderIfChanged } from "../dnd-utils";
-  import type { Guest } from "../types";
+  import type { Guest, ModalState } from "../types";
   import GuestItem from "./GuestItem.svelte";
   import { dndzone } from "svelte-dnd-action";
 
   interface Props {
     searchQuery: string;
-    onshowmodal?: (type: string, data?: unknown) => void;
+    onshowmodal?: (modal: ModalState) => void;
   }
 
   let { searchQuery, onshowmodal }: Props = $props();
