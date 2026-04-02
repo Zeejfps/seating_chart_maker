@@ -515,11 +515,12 @@
                 class="guest-list assigned-guest-list"
                 class:collapsed={!expanded}
                 use:dndzone={{
-                  items,
+                  items: expanded ? items : [],
                   type: "guest",
                   centreDraggedOnCursor: false,
                   flipDurationMs: 150,
                   morphDisabled: true,
+                  dragDisabled: !expanded,
                   dropTargetStyle: {},
                   transformDraggedElement,
                 }}
