@@ -25,14 +25,20 @@
 
 <style>
   .stats-bar {
-    grid-area: stats;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
     display: flex;
     gap: 20px;
     padding: 8px 16px;
-    border-bottom: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+    background: var(--bg);
     font-size: 13px;
     color: var(--text);
     flex-wrap: wrap;
+    box-sizing: border-box;
   }
 
   .stats-bar span {

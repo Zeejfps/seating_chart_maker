@@ -254,13 +254,13 @@
 <style>
   :global(#app) {
     display: grid;
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto 1fr;
     grid-template-columns: var(--sidebar-width) 1fr;
     grid-template-areas:
       "toolbar toolbar"
-      "stats stats"
       "sidebar main";
     height: 100svh;
+    padding-bottom: 36px;
   }
 
   @media (max-width: 768px) {
@@ -268,7 +268,6 @@
       grid-template-columns: 1fr;
       grid-template-areas:
         "toolbar"
-        "stats"
         "sidebar"
         "main";
     }
