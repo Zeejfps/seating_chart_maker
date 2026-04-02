@@ -176,3 +176,40 @@
     </div>
   {/if}
 </div>
+
+<style>
+  .sidebar-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .sidebar-actions button {
+    font-size: 13px;
+    padding: 4px 8px;
+  }
+
+  .section-label {
+    padding: 6px 12px 2px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text);
+  }
+
+  .guest-list {
+    padding: 8px;
+    min-height: 60px;
+  }
+
+  .empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    font-size: 13px;
+    padding: 20px;
+    text-align: center;
+    opacity: 0.7;
+  }
+</style>

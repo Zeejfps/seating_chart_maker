@@ -141,3 +141,71 @@
     </div>
   </div>
 </div>
+
+<style>
+  .toolbar {
+    grid-area: toolbar;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .toolbar h1 {
+    font-size: 18px;
+    margin-right: auto;
+  }
+
+  .toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .toolbar-group input[type="number"] {
+    width: 50px;
+    padding: 4px 6px;
+    font-size: 13px;
+  }
+
+  .toolbar-separator {
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+    margin: 0 4px;
+  }
+
+  .dropdown-wrap {
+    position: relative;
+  }
+
+  .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px;
+    min-width: 180px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: 50;
+  }
+
+  .dropdown-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  .dropdown-menu button:hover {
+    background: var(--accent-bg);
+  }
+</style>

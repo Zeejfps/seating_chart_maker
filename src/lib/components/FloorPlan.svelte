@@ -357,3 +357,77 @@
     <span class="zoom-display">{Math.round(zoom * 100)}%</span>
   </div>
 </div>
+
+<style>
+  .floor-plan-viewport {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    cursor: grab;
+  }
+
+  .floor-plan-viewport.panning {
+    cursor: grabbing;
+  }
+
+  .floor-plan-viewport.dragging-table {
+    cursor: grabbing;
+  }
+
+  .floor-plan-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    background-image: radial-gradient(
+      circle,
+      var(--border) 1px,
+      transparent 1px
+    );
+    background-size: 50px 50px;
+  }
+
+  .floor-plan-add-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 20;
+    font-size: 13px;
+    padding: 6px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .floor-plan-add-btn:hover {
+    border-color: var(--accent-border);
+    color: var(--accent);
+  }
+
+  .floor-plan-controls {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 20;
+  }
+
+  .floor-plan-controls button {
+    font-size: 12px;
+    padding: 4px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .zoom-display {
+    font-size: 12px;
+    color: var(--text);
+    min-width: 40px;
+    text-align: center;
+  }
+</style>

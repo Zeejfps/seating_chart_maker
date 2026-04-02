@@ -87,3 +87,91 @@
     {/each}
   </div>
 </div>
+
+<style>
+  .table-circle {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    margin-left: -50px;
+    margin-top: -50px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    user-select: none;
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+    z-index: 1;
+    overflow: visible;
+  }
+
+  .chair {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: transparent;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .chair.occupied {
+    background: var(--border);
+  }
+
+  .table-circle:hover {
+    border-color: var(--accent-border);
+  }
+
+  .table-circle.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-bg);
+  }
+
+  .table-circle.dnd-hover {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+  }
+
+  .table-circle.is-dragging {
+    opacity: 0.8;
+    z-index: 10;
+    cursor: grabbing;
+  }
+
+  .table-circle-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-h);
+    line-height: 1.2;
+  }
+
+  .capacity-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 8px;
+  }
+
+  .capacity-badge.under {
+    color: var(--text);
+    background: transparent;
+  }
+
+  .capacity-badge.at {
+    color: var(--warning-yellow);
+    background: rgba(245, 158, 11, 0.1);
+  }
+
+  .capacity-badge.over {
+    color: var(--warning-red);
+    background: rgba(239, 68, 68, 0.1);
+  }
+</style>

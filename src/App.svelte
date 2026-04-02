@@ -250,3 +250,64 @@
     {/snippet}
   </Modal>
 {/if}
+
+<style>
+  :global(#app) {
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    grid-template-areas:
+      "toolbar toolbar"
+      "stats stats"
+      "sidebar main";
+    height: 100svh;
+  }
+
+  @media (max-width: 768px) {
+    :global(#app) {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "toolbar"
+        "stats"
+        "sidebar"
+        "main";
+    }
+  }
+
+  .main-area {
+    grid-area: main;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .view-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    flex-shrink: 0;
+  }
+
+  .view-tabs button {
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: none;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .view-tabs button:hover {
+    color: var(--text-h);
+    background: none;
+  }
+
+  .view-tabs button.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+</style>

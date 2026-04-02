@@ -93,3 +93,99 @@
     </button>
   {/if}
 </div>
+
+<style>
+  .guest-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: grab;
+    user-select: none;
+    font-size: 14px;
+    color: var(--text-h);
+    transition: background 0.1s;
+  }
+
+  .guest-item:hover {
+    background: var(--accent-bg);
+  }
+
+  .grip-handle {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    width: 10px;
+    height: 14px;
+    opacity: 0.3;
+    cursor: grab;
+  }
+
+  .guest-item:hover .grip-handle {
+    opacity: 0.6;
+  }
+
+  .grip-handle::before {
+    content: "";
+    display: block;
+    width: 10px;
+    height: 14px;
+    background-image: radial-gradient(
+      circle,
+      currentColor 1.2px,
+      transparent 1.2px
+    );
+    background-size: 5px 5px;
+    background-position: 0 0;
+  }
+
+  .guest-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .rename-input {
+    flex: 1;
+    min-width: 0;
+    cursor: text;
+    font-size: inherit;
+    padding: 0 3px;
+  }
+
+  .remove-btn {
+    opacity: 0;
+    border: none;
+    background: none;
+    color: var(--text);
+    padding: 0 4px;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .guest-item:hover .remove-btn {
+    opacity: 0.6;
+  }
+
+  .remove-btn:hover {
+    opacity: 1;
+    color: var(--warning-red);
+  }
+
+  /* Shadow placeholder during drag — :global needed because dnd library adds the attribute */
+  :global(.guest-item[data-is-dnd-shadow-item-internal]) {
+    opacity: 0.3;
+    border: 1.5px dashed var(--accent-border);
+    background: var(--accent-bg);
+    visibility: visible !important;
+  }
+
+  :global(.guest-item[data-is-dnd-shadow-item-internal]) :global(*) {
+    visibility: hidden;
+  }
+</style>

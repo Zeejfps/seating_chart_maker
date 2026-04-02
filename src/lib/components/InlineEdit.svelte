@@ -53,3 +53,28 @@
     {value}
   </span>
 {/if}
+
+<style>
+  .inline-edit {
+    cursor: text;
+    border-radius: 4px;
+    padding: 1px 4px;
+    margin: -1px -4px;
+  }
+
+  .inline-edit:hover {
+    background: var(--accent-bg);
+  }
+
+  .inline-edit-input {
+    font: inherit;
+    font-weight: inherit;
+    color: inherit;
+    border: 1px solid var(--accent-border);
+    background: var(--bg);
+    border-radius: 4px;
+    padding: 0 3px;
+    width: 100%;
+    outline: none;
+  }
+</style>

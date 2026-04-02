@@ -283,3 +283,241 @@
     </div>
   {/if}
 </div>
+
+<style>
+  .assigned-section {
+    border-top: 1px solid var(--border);
+    margin-top: 16px;
+    padding-top: 8px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .section-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    padding: 4px 16px 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    background: none;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .section-toggle:hover {
+    background: var(--accent-bg);
+    color: var(--accent);
+  }
+
+  .toggle-arrow {
+    font-size: 9px;
+    transition: transform 0.15s;
+    display: inline-block;
+  }
+
+  .toggle-arrow.expanded {
+    transform: rotate(90deg);
+  }
+
+  .section-count {
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--text);
+    opacity: 0.7;
+  }
+
+  .add-table-btn-sidebar {
+    margin-left: auto;
+    margin-right: 4px;
+    opacity: 0;
+    color: var(--text);
+    padding: 1px 8px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    border-radius: 10px;
+    flex-shrink: 0;
+    line-height: 1.4;
+    display: inline-flex;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 500;
+    transition: opacity 0.1s;
+  }
+
+  .section-toggle:hover .add-table-btn-sidebar {
+    opacity: 0.5;
+  }
+
+  .add-table-btn-sidebar:hover {
+    opacity: 1;
+    color: var(--accent);
+  }
+
+  .table-group {
+    margin-bottom: 2px;
+    position: relative;
+  }
+
+  .table-subheader {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding-left: 20px;
+    padding-right: 8px;
+    position: relative;
+  }
+
+  .header-drop-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  .header-drop-overlay > :global(*) {
+    display: none;
+  }
+
+  .table-subheader.header-drop-highlight {
+    background-color: var(--accent-bg);
+    outline: 2px solid var(--accent-border);
+    border-radius: 4px;
+  }
+
+  .table-subheader.highlight-flash::before {
+    content: "";
+    position: absolute;
+    inset: -4px 8px;
+    border-radius: 4px;
+    animation: flash-border 1.5s ease-out;
+    pointer-events: none;
+  }
+
+  @keyframes flash-border {
+    0%,
+    20%,
+    40% {
+      outline: 2px solid var(--accent-border);
+      background-color: var(--accent-bg);
+    }
+    10%,
+    30% {
+      outline: 2px solid transparent;
+      background-color: transparent;
+    }
+    50% {
+      outline: 2px solid var(--accent-border);
+      background-color: var(--accent-bg);
+    }
+    100% {
+      outline: none;
+      background-color: transparent;
+    }
+  }
+
+  .table-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    padding: 4px 16px 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    background: none;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .table-toggle:hover {
+    background: var(--accent-bg);
+    color: var(--accent);
+  }
+
+  .table-toggle .toggle-arrow {
+    font-size: 8px;
+  }
+
+  .table-toggle .table-count {
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--text);
+    opacity: 0.7;
+  }
+
+  .pan-to-table-btn {
+    margin-left: auto;
+  }
+
+  .pan-to-table-btn,
+  .delete-table-btn-sidebar {
+    opacity: 0;
+    color: var(--text);
+    padding: 0 4px;
+    cursor: pointer;
+    border-radius: 4px;
+    flex-shrink: 0;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    transition: opacity 0.1s;
+  }
+
+  .table-toggle:hover .pan-to-table-btn,
+  .table-toggle:hover .delete-table-btn-sidebar {
+    opacity: 0.5;
+  }
+
+  .pan-to-table-btn:hover {
+    opacity: 1 !important;
+    color: var(--accent);
+  }
+
+  .delete-table-btn-sidebar:hover {
+    opacity: 1 !important;
+    color: var(--warning-red);
+  }
+
+  .guest-list {
+    padding: 8px;
+    min-height: 60px;
+  }
+
+  .assigned-guest-list {
+    padding: 4px 8px;
+    padding-left: 40px;
+  }
+
+  .assigned-guest-list:empty {
+    padding: 0;
+  }
+
+  .assigned-guest-list.collapsed {
+    min-height: 0;
+    height: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    font-size: 13px;
+    padding: 20px;
+    text-align: center;
+    opacity: 0.7;
+  }
+</style>

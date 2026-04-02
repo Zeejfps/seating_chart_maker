@@ -22,3 +22,24 @@
   <span><strong>{tableCount}</strong> tables</span>
   <span><strong>{tablesWithOpenSeats}</strong> with open seats</span>
 </div>
+
+<style>
+  .stats-bar {
+    grid-area: stats;
+    display: flex;
+    gap: 20px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text);
+    flex-wrap: wrap;
+  }
+
+  .stats-bar span {
+    white-space: nowrap;
+  }
+
+  .stats-bar :global(strong) {
+    color: var(--text-h);
+  }
+</style>
