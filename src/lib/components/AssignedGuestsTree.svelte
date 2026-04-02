@@ -263,6 +263,7 @@
                 dragDisabled: true,
                 morphDisabled: true,
                 flipDurationMs: 0,
+                dropAnimationDisabled: true,
                 dropTargetStyle: {},
                 dropTargetClasses: [],
                 transformDraggedElement,
