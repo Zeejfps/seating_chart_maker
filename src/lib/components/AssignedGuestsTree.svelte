@@ -192,7 +192,6 @@
       <span class="toggle-arrow" class:expanded={assignedExpanded}>&#9654;</span
       >
       Tables
-      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
       <span
         class="add-table-btn-sidebar"
         title="Add table"
@@ -225,7 +224,6 @@
             >
               <span class="toggle-arrow" class:expanded>&#9654;</span>
               <span class="table-name">Table {table.name}</span>
-              <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
               <span
                 class="pan-to-table-btn"
                 title="Pan to table"
@@ -238,7 +236,6 @@
               >
                 <CrosshairIcon />
               </span>
-              <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
               <span
                 class="delete-table-btn-sidebar"
                 title="Delete table"
