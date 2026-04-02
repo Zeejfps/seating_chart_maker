@@ -5,6 +5,7 @@
   import { AddTableCommand, MoveTableCommand } from "../commands";
   import { CANVAS_W, CANVAS_H, snapToGrid } from "../grid";
   import { assignGuestIfChanged } from "../dnd-utils";
+  import { TRIGGERS } from "svelte-dnd-action";
   import { buildNewTable } from "../table-factory";
   import type { Guest, Table } from "../types";
   import TableCircle from "./TableCircle.svelte";
@@ -296,7 +297,15 @@
   });
 
   function handleDndConsider(tableId: string, e: CustomEvent) {
-    dndDraggingTable = tableId;
+    const trigger = e.detail.info.trigger;
+    if (trigger === TRIGGERS.DRAGGED_ENTERED) {
+      dndDraggingTable = tableId;
+    } else if (
+      trigger === TRIGGERS.DRAGGED_LEFT ||
+      trigger === TRIGGERS.DRAGGED_LEFT_ALL
+    ) {
+      if (dndDraggingTable === tableId) dndDraggingTable = null;
+    }
     setDndActive(true);
     const newMap = new Map(dndItemsByTable);
     newMap.set(tableId, e.detail.items);
