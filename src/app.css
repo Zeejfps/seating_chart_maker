@@ -769,6 +769,8 @@ input:focus {
 /* Assigned guests section */
 .assigned-section {
   border-top: 1px solid var(--border);
+  margin-top: 16px;
+  padding-top: 8px;
 }
 
 .section-toggle {
