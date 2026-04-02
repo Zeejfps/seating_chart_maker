@@ -185,25 +185,32 @@
 
 <div class="assigned-section">
   <div class="section-header">
-    <button
+    <div
       class="section-toggle"
+      role="button"
+      tabindex="0"
       onclick={() => (assignedExpanded = !assignedExpanded)}
+      onkeydown={(e: KeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          assignedExpanded = !assignedExpanded;
+        }
+      }}
     >
       <span class="toggle-arrow" class:expanded={assignedExpanded}>&#9654;</span
       >
       Tables
-      <span
+      <button
         class="add-table-btn-sidebar"
         title="Add table"
-        role="button"
         tabindex="-1"
         onclick={(e: MouseEvent) => {
           e.stopPropagation();
           handleAddTable();
-        }}>+ Add</span
+        }}>+ Add</button
       >
       <span class="section-count">{totalFilteredAssigned}</span>
-    </button>
+    </div>
   </div>
 
   {#if assignedExpanded}
@@ -216,18 +223,25 @@
             class="table-subheader"
             class:header-drop-highlight={headerDropTable === table.id}
           >
-            <button
+            <div
               class="table-toggle"
               class:highlight-flash={flashTableId === table.id}
+              role="button"
+              tabindex="0"
               use:registerToggleRef={table.id}
               onclick={() => toggleTable(table.id)}
+              onkeydown={(e: KeyboardEvent) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  toggleTable(table.id);
+                }
+              }}
             >
               <span class="toggle-arrow" class:expanded>&#9654;</span>
               <span class="table-name">Table {table.name}</span>
-              <span
+              <button
                 class="pan-to-table-btn"
                 title="Pan to table"
-                role="button"
                 tabindex="-1"
                 onclick={(e: MouseEvent) => {
                   e.stopPropagation();
@@ -235,11 +249,10 @@
                 }}
               >
                 <CrosshairIcon />
-              </span>
-              <span
+              </button>
+              <button
                 class="delete-table-btn-sidebar"
                 title="Delete table"
-                role="button"
                 tabindex="-1"
                 onclick={(e: MouseEvent) => {
                   e.stopPropagation();
@@ -247,9 +260,9 @@
                 }}
               >
                 <TrashIcon />
-              </span>
+              </button>
               <span class="table-count">{items.length}/{table.capacity}</span>
-            </button>
+            </div>
             <div
               class="header-drop-overlay"
               style:pointer-events={isDndActive() ? "auto" : "none"}
@@ -360,6 +373,7 @@
     color: var(--text);
     padding: 1px 8px;
     cursor: pointer;
+    font: inherit;
     border: 1px solid var(--border);
     background: var(--card-bg);
     border-radius: 10px;
@@ -485,6 +499,8 @@
     color: var(--text);
     padding: 0 4px;
     cursor: pointer;
+    border: none;
+    background: none;
     border-radius: 4px;
     flex-shrink: 0;
     line-height: 1;

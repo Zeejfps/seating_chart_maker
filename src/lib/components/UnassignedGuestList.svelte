@@ -96,12 +96,11 @@
 
 <div class="section-header">
   <span class="section-label">Unassigned ({filteredGuests.length})</span>
-  <span
+  <button
     class="add-guest-btn"
     title="Add guest"
-    role="button"
     tabindex="-1"
-    onclick={handleAddGuest}>+ Add</span
+    onclick={handleAddGuest}>+ Add</button
   >
 </div>
 
@@ -173,6 +172,7 @@
     color: var(--text);
     padding: 1px 8px;
     cursor: pointer;
+    font: inherit;
     border: 1px solid var(--border);
     background: var(--card-bg);
     border-radius: 10px;

@@ -40,8 +40,16 @@
   class:is-dragging={isDragging}
   class:dnd-hover={isDndHover}
   style="left:{x}px; top:{y}px;"
+  role="button"
+  tabindex="0"
   {onmousedown}
   {onclick}
+  onkeydown={(e: KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onclick(e as unknown as MouseEvent);
+    }
+  }}
 >
   <span class="table-circle-name">{table.name}</span>
   <CapacityBadge count={guestCount} capacity={table.capacity} size="small" />
