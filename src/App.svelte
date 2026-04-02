@@ -164,17 +164,17 @@
 <div class="main-area">
   <div class="view-tabs">
     <button
+      class:active={activeTab === "floorplan"}
+      onclick={() => {
+        activeTab = "floorplan";
+      }}>Floor Plan</button
+    >
+    <button
       class:active={activeTab === "cards"}
       onclick={() => {
         activeTab = "cards";
         selectedTableId = null;
       }}>Card View</button
-    >
-    <button
-      class:active={activeTab === "floorplan"}
-      onclick={() => {
-        activeTab = "floorplan";
-      }}>Floor Plan</button
     >
   </div>
   {#if activeTab === "cards"}
