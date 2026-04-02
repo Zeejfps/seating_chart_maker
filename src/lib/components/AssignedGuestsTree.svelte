@@ -13,10 +13,8 @@
     expandTable,
     setSearchExpandedTables,
   } from "../tree-state.svelte";
-  import { executeCommand } from "../command-history.svelte";
-  import { AddTableCommand } from "../commands";
   import { transformDraggedElement, assignGuestIfChanged } from "../dnd-utils";
-  import { buildNewTable } from "../table-factory";
+  import { addTable } from "../table-factory";
   import type { Guest, ModalState, Table } from "../types";
   import GuestItem from "./GuestItem.svelte";
   import TrashIcon from "./icons/TrashIcon.svelte";
@@ -131,19 +129,22 @@
     localAssignedByTable = current;
   }
 
-  function handleAssignedFinalize(tableId: string, e: CustomEvent) {
-    draggingAssignedTable = null;
+  function finalizeDropOnTable(tableId: string, items: { id: string }[]) {
     headerDropTable = null;
     setDndActive(false);
-    const newItems: Guest[] = e.detail.items;
-    for (const item of newItems) {
+    for (const item of items) {
       assignGuestIfChanged(item.id, tableId);
     }
     if (!isTableExpanded(tableId)) {
       toggleTable(tableId);
     }
+  }
+
+  function handleAssignedFinalize(tableId: string, e: CustomEvent) {
+    draggingAssignedTable = null;
+    finalizeDropOnTable(tableId, e.detail.items);
     const current = new Map(localAssignedByTable);
-    current.set(tableId, newItems);
+    current.set(tableId, e.detail.items);
     localAssignedByTable = current;
   }
 
@@ -164,22 +165,10 @@
   }
 
   function handleHeaderFinalize(tableId: string, e: CustomEvent) {
-    headerDropTable = null;
-    setDndActive(false);
-    const newItems: { id: string }[] = e.detail.items;
-    for (const item of newItems) {
-      assignGuestIfChanged(item.id, tableId);
-    }
-    if (!isTableExpanded(tableId)) {
-      toggleTable(tableId);
-    }
+    finalizeDropOnTable(tableId, e.detail.items);
     const current = new Map(headerOverlayItems);
     current.set(tableId, []);
     headerOverlayItems = current;
-  }
-
-  function handleAddTable() {
-    executeCommand(new AddTableCommand(buildNewTable()));
   }
 </script>
 
@@ -201,12 +190,12 @@
       >
       Tables
       <button
-        class="add-table-btn-sidebar"
+        class="pill-btn"
         title="Add table"
         tabindex="-1"
         onclick={(e: MouseEvent) => {
           e.stopPropagation();
-          handleAddTable();
+          addTable();
         }}>+ Add</button
       >
       <span class="section-count">{totalFilteredAssigned}</span>
@@ -240,7 +229,7 @@
               <span class="toggle-arrow" class:expanded>&#9654;</span>
               <span class="table-name">Table {table.name}</span>
               <button
-                class="pan-to-table-btn"
+                class="icon-btn pan-to-table-btn"
                 title="Pan to table"
                 tabindex="-1"
                 onclick={(e: MouseEvent) => {
@@ -251,7 +240,7 @@
                 <CrosshairIcon />
               </button>
               <button
-                class="delete-table-btn-sidebar"
+                class="icon-btn delete-table-btn-sidebar"
                 title="Delete table"
                 tabindex="-1"
                 onclick={(e: MouseEvent) => {
@@ -366,33 +355,14 @@
     opacity: 0.7;
   }
 
-  .add-table-btn-sidebar {
+  .section-toggle :global(.pill-btn) {
     margin-left: auto;
     margin-right: 4px;
     opacity: 0;
-    color: var(--text);
-    padding: 1px 8px;
-    cursor: pointer;
-    font: inherit;
-    border: 1px solid var(--border);
-    background: var(--card-bg);
-    border-radius: 10px;
-    flex-shrink: 0;
-    line-height: 1.4;
-    display: inline-flex;
-    align-items: center;
-    font-size: 10px;
-    font-weight: 500;
-    transition: opacity 0.1s;
   }
 
-  .section-toggle:hover .add-table-btn-sidebar {
+  .section-toggle:hover :global(.pill-btn) {
     opacity: 0.5;
-  }
-
-  .add-table-btn-sidebar:hover {
-    opacity: 1;
-    color: var(--accent);
   }
 
   .table-group {
@@ -493,34 +463,15 @@
     margin-left: auto;
   }
 
-  .pan-to-table-btn,
-  .delete-table-btn-sidebar {
-    opacity: 0;
-    color: var(--text);
-    padding: 0 4px;
-    cursor: pointer;
-    border: none;
-    background: none;
-    border-radius: 4px;
-    flex-shrink: 0;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    transition: opacity 0.1s;
-  }
-
-  .table-toggle:hover .pan-to-table-btn,
-  .table-toggle:hover .delete-table-btn-sidebar {
+  .table-toggle:hover :global(.icon-btn) {
     opacity: 0.5;
   }
 
-  .pan-to-table-btn:hover {
-    opacity: 1 !important;
+  .table-toggle :global(.icon-btn.pan-to-table-btn:hover) {
     color: var(--accent);
   }
 
-  .delete-table-btn-sidebar:hover {
-    opacity: 1 !important;
+  .table-toggle :global(.icon-btn.delete-table-btn-sidebar:hover) {
     color: var(--warning-red);
   }
 

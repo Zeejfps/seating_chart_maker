@@ -2,9 +2,10 @@
   interface Props {
     value: string;
     oncommit: (newValue: string) => void;
+    onediting?: (editing: boolean) => void;
   }
 
-  let { value, oncommit }: Props = $props();
+  let { value, oncommit, onediting }: Props = $props();
 
   let editing = $state(false);
   let editValue = $state("");
@@ -13,7 +14,7 @@
   function startEdit() {
     editValue = value;
     editing = true;
-    // Wait for DOM update then focus
+    onediting?.(true);
     requestAnimationFrame(() => {
       inputEl?.focus();
       inputEl?.select();
@@ -26,14 +27,17 @@
       oncommit(trimmed);
     }
     editing = false;
+    onediting?.(false);
   }
 
   function handleKeydown(e: KeyboardEvent) {
+    e.stopPropagation();
     if (e.key === "Enter") {
       e.preventDefault();
       commit();
     } else if (e.key === "Escape") {
       editing = false;
+      onediting?.(false);
     }
   }
 </script>

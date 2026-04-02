@@ -1,6 +1,13 @@
 import type { Table } from "./types";
 import { getTables, getNextTableNum } from "./state.svelte";
+import { executeCommand } from "./command-history.svelte";
+import { AddTableCommand } from "./commands";
 import { findOpenSlot } from "./grid";
+
+/** Create and execute a command to add a new table. */
+export function addTable(): void {
+  executeCommand(new AddTableCommand(buildNewTable()));
+}
 
 /** Create a new table with a unique ID, next sequential name, default capacity, and the next open grid position. */
 export function buildNewTable(): Table {

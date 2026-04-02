@@ -130,6 +130,48 @@ input:focus {
   opacity: 0.7;
 }
 
+/* Small pill-shaped action buttons (e.g. "+ Add" in section headers) */
+.pill-btn {
+  color: var(--text);
+  padding: 1px 8px;
+  cursor: pointer;
+  font: inherit;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  border-radius: 10px;
+  flex-shrink: 0;
+  line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 500;
+  transition: opacity 0.1s;
+}
+
+.pill-btn:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
+/* Transparent icon buttons that reveal on parent hover */
+.icon-btn {
+  opacity: 0;
+  border: none;
+  background: none;
+  color: var(--text);
+  padding: 0 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  transition: opacity 0.1s;
+}
+
+.icon-btn:hover {
+  opacity: 1;
+}
+
 /* DnD shadow placeholder during drag */
 .guest-item[data-is-dnd-shadow-item-internal] {
   opacity: 0.3;

@@ -97,7 +97,7 @@
 <div class="section-header">
   <span class="section-label">Unassigned ({filteredGuests.length})</span>
   <button
-    class="add-guest-btn"
+    class="pill-btn"
     title="Add guest"
     tabindex="-1"
     onclick={handleAddGuest}>+ Add</button
@@ -167,28 +167,9 @@
     color: var(--text);
   }
 
-  .add-guest-btn {
+  .section-header :global(.pill-btn) {
     margin-left: auto;
-    color: var(--text);
-    padding: 1px 8px;
-    cursor: pointer;
-    font: inherit;
-    border: 1px solid var(--border);
-    background: var(--card-bg);
-    border-radius: 10px;
-    flex-shrink: 0;
-    line-height: 1.4;
-    display: inline-flex;
-    align-items: center;
-    font-size: 10px;
-    font-weight: 500;
     opacity: 0.5;
-    transition: opacity 0.1s;
-  }
-
-  .add-guest-btn:hover {
-    opacity: 1;
-    color: var(--accent);
   }
 
   .guest-list {

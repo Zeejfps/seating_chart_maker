@@ -1,8 +1,6 @@
 <script lang="ts">
   import { getTables, getGuestsByTable } from "../state.svelte";
-  import { executeCommand } from "../command-history.svelte";
-  import { AddTableCommand } from "../commands";
-  import { buildNewTable } from "../table-factory";
+  import { addTable } from "../table-factory";
   import TableCard from "./TableCard.svelte";
   import type { ModalState } from "../types";
 
@@ -11,10 +9,6 @@
   }
 
   let { onshowmodal }: Props = $props();
-
-  function handleAddTable() {
-    executeCommand(new AddTableCommand(buildNewTable()));
-  }
 </script>
 
 <div class="table-grid" role="presentation">
@@ -26,7 +20,7 @@
     />
   {/each}
 
-  <button class="add-table-card" onclick={handleAddTable}>+ Add Table</button>
+  <button class="add-table-card" onclick={addTable}>+ Add Table</button>
 </div>
 
 <style>

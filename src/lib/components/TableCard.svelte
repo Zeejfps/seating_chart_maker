@@ -83,7 +83,7 @@
     </span>
     <CapacityBadge count={tableGuests.length} capacity={table.capacity} />
     <button
-      class="delete-table-btn"
+      class="icon-btn"
       onclick={(e) => {
         e.stopPropagation();
         handleDelete();
@@ -170,20 +170,11 @@
     min-width: 0;
   }
 
-  .delete-table-btn {
-    border: none;
-    background: none;
-    color: var(--text);
-    padding: 0 2px;
-    cursor: pointer;
+  .table-card-header :global(.icon-btn) {
     opacity: 0.4;
-    line-height: 1;
-    display: flex;
-    align-items: center;
   }
 
-  .delete-table-btn:hover {
-    opacity: 1;
+  .table-card-header :global(.icon-btn:hover) {
     color: var(--warning-red);
   }
 

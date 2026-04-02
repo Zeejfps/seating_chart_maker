@@ -2,11 +2,11 @@
   import { onMount } from "svelte";
   import { getTables, getGuestsByTable, setDndActive } from "../state.svelte";
   import { executeCommand } from "../command-history.svelte";
-  import { AddTableCommand, MoveTableCommand } from "../commands";
+  import { MoveTableCommand } from "../commands";
   import { CANVAS_W, CANVAS_H, snapToGrid } from "../grid";
   import { assignGuestIfChanged } from "../dnd-utils";
   import { TRIGGERS } from "svelte-dnd-action";
-  import { buildNewTable } from "../table-factory";
+  import { addTable } from "../table-factory";
   import type { Guest, Table } from "../types";
   import TableCircle from "./TableCircle.svelte";
 
@@ -273,10 +273,6 @@
     panY = rect.height / 2 - centerY * newZoom;
   }
 
-  function handleAddTable() {
-    executeCommand(new AddTableCommand(buildNewTable()));
-  }
-
   // --- DND for guest drops ---
   // Each circle manages a local items array for svelte-dnd-action
   let dndItemsByTable: Map<string, Guest[]> = $state(new Map());
@@ -394,7 +390,7 @@
   <button
     class="floor-plan-add-btn"
     onmousedown={(e) => e.stopPropagation()}
-    onclick={handleAddTable}
+    onclick={addTable}
   >
     + Add Table
   </button>
