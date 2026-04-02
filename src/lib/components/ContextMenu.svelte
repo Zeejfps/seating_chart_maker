@@ -249,6 +249,7 @@
             flipDurationMs: 150,
             morphDisabled: true,
             centreDraggedOnCursor: false,
+            useCursorForDetection: true,
             dropFromOthersDisabled: true,
             transformDraggedElement,
             dropTargetStyle: {
