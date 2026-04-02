@@ -1,4 +1,4 @@
-import type { ChartState, Guest, Snapshot, Table } from "./types";
+import type { ChartState, Snapshot, Table } from "./types";
 import {
   snapToGrid,
   gridStartPosition,
@@ -60,24 +60,6 @@ export async function importSnapshot(file: File): Promise<ChartState> {
     guests: parsed.guests,
     tables: backfillTablePositions(parsed.tables),
   };
-}
-
-export function exportGuestListCsv(guests: Guest[], tables: Table[]): void {
-  const tableMap = new Map<string, string>();
-  for (const t of tables) {
-    tableMap.set(t.id, t.name);
-  }
-
-  const lines = ["name,table"];
-  for (const g of guests) {
-    const tableName = g.tableId ? (tableMap.get(g.tableId) ?? "") : "";
-    lines.push(
-      `"${g.name.replace(/"/g, '""')}","${tableName.replace(/"/g, '""')}"`,
-    );
-  }
-
-  const blob = new Blob([lines.join("\n")], { type: "text/csv" });
-  downloadBlob(blob, "seating-chart.csv");
 }
 
 /** Open a file picker dialog and return the selected file, or null if cancelled. */

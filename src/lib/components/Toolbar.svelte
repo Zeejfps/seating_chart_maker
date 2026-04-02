@@ -7,12 +7,7 @@
     redo,
     clearHistory,
   } from "../command-history.svelte";
-  import {
-    exportSnapshot,
-    importSnapshot,
-    exportGuestListCsv,
-    pickFile,
-  } from "../persistence";
+  import { exportSnapshot, importSnapshot, pickFile } from "../persistence";
 
   interface Props {
     onshowmodal: (type: string, data?: unknown) => void;
@@ -20,21 +15,11 @@
 
   let { onshowmodal }: Props = $props();
 
-  let showExportMenu = $state(false);
-  let showImportMenu = $state(false);
-
-  function handleExportSnapshot() {
+  function handleExport() {
     exportSnapshot(getState());
-    showExportMenu = false;
   }
 
-  function handleExportCsv() {
-    exportGuestListCsv(getGuests(), getTables());
-    showExportMenu = false;
-  }
-
-  async function handleImportSnapshot() {
-    showImportMenu = false;
+  async function handleImport() {
     const file = await pickFile(".json,application/json");
     if (!file) return;
     try {
@@ -52,14 +37,7 @@
       );
     }
   }
-
-  function handleClickOutside() {
-    showExportMenu = false;
-    showImportMenu = false;
-  }
 </script>
-
-<svelte:window onclick={handleClickOutside} />
 
 <div class="toolbar">
   <h1>Wedding Seating Chart</h1>
@@ -76,35 +54,8 @@
   <div class="toolbar-separator"></div>
 
   <div class="toolbar-group">
-    <div class="dropdown-wrap">
-      <button
-        onclick={(e) => {
-          e.stopPropagation();
-          showExportMenu = !showExportMenu;
-          showImportMenu = false;
-        }}>Export</button
-      >
-      {#if showExportMenu}
-        <div class="dropdown-menu" role="menu">
-          <button onclick={handleExportSnapshot}>JSON Snapshot</button>
-          <button onclick={handleExportCsv}>Guest List CSV</button>
-        </div>
-      {/if}
-    </div>
-    <div class="dropdown-wrap">
-      <button
-        onclick={(e) => {
-          e.stopPropagation();
-          showImportMenu = !showImportMenu;
-          showExportMenu = false;
-        }}>Import</button
-      >
-      {#if showImportMenu}
-        <div class="dropdown-menu" role="menu">
-          <button onclick={handleImportSnapshot}>JSON Snapshot</button>
-        </div>
-      {/if}
-    </div>
+    <button onclick={handleExport}>Export</button>
+    <button onclick={handleImport}>Import</button>
   </div>
 </div>
 
@@ -135,37 +86,5 @@
     height: 24px;
     background: var(--border);
     margin: 0 4px;
-  }
-
-  .dropdown-wrap {
-    position: relative;
-  }
-
-  .dropdown-menu {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    margin-top: 4px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 4px;
-    min-width: 180px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    z-index: 50;
-  }
-
-  .dropdown-menu button {
-    display: block;
-    width: 100%;
-    text-align: left;
-    border: none;
-    border-radius: 4px;
-    padding: 6px 10px;
-    font-size: 13px;
-  }
-
-  .dropdown-menu button:hover {
-    background: var(--accent-bg);
   }
 </style>
