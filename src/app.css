@@ -12,7 +12,7 @@
   --warning-red: #ef4444;
   --warning-red-bg: rgba(239, 68, 68, 0.1);
   --success-green: #22c55e;
-  --sidebar-width: 300px;
+  --sidebar-width: 220px;
 
   --sans: system-ui, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;

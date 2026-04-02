@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { onMount } from "svelte";
   import {
     getGuests,
     getTables,
@@ -32,16 +32,8 @@
   let activeTab: "cards" | "floorplan" = $state("floorplan");
   let selectedTableId: string | null = $state(null);
   let initialized = $state(false);
-  let floorPlanApi: { panToTable: (tableId: string) => void } | null =
-    $state(null);
-
-  async function handlePanToTable(tableId: string) {
-    if (activeTab !== "floorplan") {
-      activeTab = "floorplan";
-      await tick();
-    }
-    floorPlanApi?.panToTable(tableId);
-  }
+  let searchQuery = $state("");
+  let searchInputEl: HTMLInputElement | undefined = $state();
 
   // Modal state
   let modal: ModalState | null = $state(null);
@@ -93,6 +85,13 @@
       const table = getTables().find((t) => t.id === selectedTableId);
       if (table) {
         showModal({ type: "delete-table", table });
+      }
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+      e.preventDefault();
+      if (activeTab === "floorplan") {
+        searchInputEl?.focus();
       }
       return;
     }
@@ -166,11 +165,7 @@
 
 <Toolbar onshowmodal={showModal} />
 <StatsBar />
-<Sidebar
-  {selectedTableId}
-  onshowmodal={showModal}
-  onpantotable={handlePanToTable}
-/>
+<Sidebar {searchQuery} onshowmodal={showModal} />
 <div class="main-area">
   <div class="view-tabs">
     <button
@@ -184,16 +179,28 @@
       onclick={() => {
         activeTab = "cards";
         selectedTableId = null;
+        searchQuery = "";
       }}>Card View</button
     >
   </div>
+  {#if activeTab === "floorplan"}
+    <div class="search-bar">
+      <input
+        bind:this={searchInputEl}
+        type="search"
+        placeholder="Search guests..."
+        bind:value={searchQuery}
+      />
+    </div>
+  {/if}
   {#if activeTab === "cards"}
     <TableGrid onshowmodal={showModal} />
   {:else}
     <FloorPlan
       {selectedTableId}
+      {searchQuery}
       onselecttable={(id) => (selectedTableId = id)}
-      onready={(api) => (floorPlanApi = api)}
+      onshowmodal={showModal}
     />
   {/if}
 </div>
@@ -332,5 +339,18 @@
   .view-tabs button.active {
     color: var(--accent);
     border-bottom-color: var(--accent);
+  }
+
+  .search-bar {
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .search-bar input {
+    width: 100%;
+    max-width: 300px;
+    font-size: 13px;
+    padding: 5px 10px;
   }
 </style>

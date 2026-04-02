@@ -10,10 +10,12 @@
     isSelected: boolean;
     isDragging: boolean;
     isDndHover: boolean;
+    isDimmed?: boolean;
     x: number;
     y: number;
     onmousedown: (e: MouseEvent) => void;
     onclick: (e: MouseEvent) => void;
+    oncontextmenu?: (e: MouseEvent) => void;
     ondndconsider: (e: CustomEvent) => void;
     ondndfinalize: (e: CustomEvent) => void;
   }
@@ -25,10 +27,12 @@
     isSelected,
     isDragging,
     isDndHover,
+    isDimmed = false,
     x,
     y,
     onmousedown,
     onclick,
+    oncontextmenu,
     ondndconsider,
     ondndfinalize,
   }: Props = $props();
@@ -39,11 +43,13 @@
   class:selected={isSelected}
   class:is-dragging={isDragging}
   class:dnd-hover={isDndHover}
+  class:dimmed={isDimmed}
   style="left:{x}px; top:{y}px;"
   role="button"
   tabindex="0"
   {onmousedown}
   {onclick}
+  {oncontextmenu}
   onkeydown={(e: KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -170,6 +176,11 @@
     opacity: 0.8;
     z-index: 10;
     cursor: grabbing;
+  }
+
+  .table-circle.dimmed {
+    opacity: 0.2;
+    filter: grayscale(1);
   }
 
   .table-circle-name {
