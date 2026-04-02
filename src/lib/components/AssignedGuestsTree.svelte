@@ -15,10 +15,13 @@
   } from "../tree-state.svelte";
   import { transformDraggedElement, assignGuestIfChanged } from "../dnd-utils";
   import { addTable } from "../table-factory";
+  import { executeCommand } from "../command-history.svelte";
+  import { UnassignGuestCommand } from "../commands";
   import type { Guest, ModalState, Table } from "../types";
   import GuestItem from "./GuestItem.svelte";
   import TrashIcon from "./icons/TrashIcon.svelte";
   import CrosshairIcon from "./icons/CrosshairIcon.svelte";
+  import XIcon from "./icons/XIcon.svelte";
   import { dndzone, TRIGGERS } from "svelte-dnd-action";
 
   interface Props {
@@ -289,7 +292,16 @@
           >
             {#if expanded}
               {#each items as guest (guest.id)}
-                <GuestItem {guest} {onshowmodal} />
+                <GuestItem
+                  {guest}
+                  removeTitle="Unassign guest"
+                  onremove={(g) =>
+                    executeCommand(new UnassignGuestCommand(g.id, g.tableId!))}
+                >
+                  {#snippet icon()}
+                    <XIcon />
+                  {/snippet}
+                </GuestItem>
               {/each}
             {/if}
           </div>

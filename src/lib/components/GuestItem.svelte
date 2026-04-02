@@ -11,6 +11,8 @@
     showRemove?: boolean;
     compact?: boolean;
     badge?: Snippet;
+    icon?: Snippet;
+    removeTitle?: string;
     onremove?: (guest: Guest) => void;
     onshowmodal?: (modal: ModalState) => void;
   }
@@ -20,6 +22,8 @@
     showRemove = true,
     compact = false,
     badge,
+    icon,
+    removeTitle = "Remove guest",
     onremove,
     onshowmodal,
   }: Props = $props();
@@ -55,8 +59,12 @@
     {@render badge()}
   {/if}
   {#if showRemove && !editing}
-    <button class="icon-btn" onclick={handleRemove} title="Remove guest">
-      <TrashIcon />
+    <button class="icon-btn" onclick={handleRemove} title={removeTitle}>
+      {#if icon}
+        {@render icon()}
+      {:else}
+        <TrashIcon />
+      {/if}
     </button>
   {/if}
 </div>
