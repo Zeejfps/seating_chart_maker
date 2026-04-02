@@ -11,6 +11,7 @@
     compact?: boolean;
     badge?: Snippet;
     onremove?: (guest: Guest) => void;
+    onshowmodal?: (type: string, data?: unknown) => void;
   }
 
   let {
@@ -19,6 +20,7 @@
     compact = false,
     badge,
     onremove,
+    onshowmodal,
   }: Props = $props();
 
   let editing = $state(false);
@@ -56,6 +58,8 @@
     e.stopPropagation();
     if (onremove) {
       onremove(guest);
+    } else if (onshowmodal) {
+      onshowmodal("delete-guest", guest);
     } else if (confirm(`Remove "${guest.name}" from the guest list?`)) {
       executeCommand(new RemoveGuestCommand(guest));
     }

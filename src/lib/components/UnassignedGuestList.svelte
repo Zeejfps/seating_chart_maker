@@ -13,9 +13,10 @@
 
   interface Props {
     searchQuery: string;
+    onshowmodal?: (type: string, data?: unknown) => void;
   }
 
-  let { searchQuery }: Props = $props();
+  let { searchQuery, onshowmodal }: Props = $props();
 
   let addingGuest = $state(false);
   let newGuestName = $state("");
@@ -138,7 +139,7 @@
   onfinalize={handleDndFinalize}
 >
   {#each localItems as guest (guest.id)}
-    <GuestItem {guest} />
+    <GuestItem {guest} {onshowmodal} />
   {/each}
   {#if !localItems.length && !addingGuest}
     <div class="empty-state">

@@ -21,7 +21,7 @@
     BatchCommand,
   } from "./lib/commands";
   import { detectMergeChanges } from "./lib/csv";
-  import type { ChartState, Table } from "./lib/types";
+  import type { ChartState, Guest, Table } from "./lib/types";
   import Toolbar from "./lib/components/Toolbar.svelte";
   import StatsBar from "./lib/components/StatsBar.svelte";
   import Sidebar from "./lib/components/Sidebar.svelte";
@@ -66,6 +66,12 @@
     const table = modalData as Table;
     executeCommand(new RemoveTableCommand(table));
     if (selectedTableId === table.id) selectedTableId = null;
+    closeModal();
+  }
+
+  function handleDeleteGuestConfirm() {
+    const guest = modalData as Guest;
+    executeCommand(new RemoveGuestCommand(guest));
     closeModal();
   }
 
@@ -236,6 +242,19 @@
     {#snippet actions()}
       <button onclick={closeModal}>Cancel</button>
       <button class="danger" onclick={handleDeleteTableConfirm}>Delete</button>
+    {/snippet}
+  </Modal>
+{/if}
+
+{#if modalType === "delete-guest"}
+  {@const guest = modalData as Guest}
+  <Modal title="Delete Guest" onclose={closeModal}>
+    {#snippet children()}
+      <p>Delete "<strong>{guest.name}</strong>"?</p>
+    {/snippet}
+    {#snippet actions()}
+      <button onclick={closeModal}>Cancel</button>
+      <button class="danger" onclick={handleDeleteGuestConfirm}>Delete</button>
     {/snippet}
   </Modal>
 {/if}

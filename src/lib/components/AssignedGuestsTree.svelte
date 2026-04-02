@@ -290,7 +290,7 @@
           >
             {#if expanded}
               {#each items as guest (guest.id)}
-                <GuestItem {guest} />
+                <GuestItem {guest} {onshowmodal} />
               {/each}
             {/if}
           </div>
