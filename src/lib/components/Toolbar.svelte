@@ -1,27 +1,18 @@
 <script lang="ts">
-  import {
-    getTables,
-    getGuests,
-    getState,
-    replaceAll,
-    getNextTableNum,
-  } from "../state.svelte";
+  import { getTables, getGuests, getState, replaceAll } from "../state.svelte";
   import {
     getCanUndo,
     getCanRedo,
     undo,
     redo,
-    executeCommand,
     clearHistory,
   } from "../command-history.svelte";
-  import { AddTableCommand, BatchCommand } from "../commands";
   import {
     exportSnapshot,
     importSnapshot,
     exportGuestListCsv,
     pickFile,
   } from "../persistence";
-  import { findOpenSlots } from "../grid";
 
   interface Props {
     onshowmodal: (type: string, data?: unknown) => void;
@@ -29,26 +20,8 @@
 
   let { onshowmodal }: Props = $props();
 
-  let bulkCount = $state(8);
   let showExportMenu = $state(false);
   let showImportMenu = $state(false);
-
-  function handleBulkCreate() {
-    if (bulkCount < 1) return;
-    const startNum = getNextTableNum();
-    const occupied = new Set(getTables().map((t) => `${t.x},${t.y}`));
-    const slots = findOpenSlots(occupied, bulkCount);
-    const cmds = slots.map(
-      (pos, i) =>
-        new AddTableCommand({
-          id: crypto.randomUUID(),
-          name: String(startNum + i),
-          capacity: 8,
-          ...pos,
-        }),
-    );
-    executeCommand(new BatchCommand(cmds, `Create ${bulkCount} tables`));
-  }
 
   function handleExportSnapshot() {
     exportSnapshot(getState());
@@ -90,13 +63,6 @@
 
 <div class="toolbar">
   <h1>Wedding Seating Chart</h1>
-
-  <div class="toolbar-group">
-    <input type="number" min="1" max="50" bind:value={bulkCount} />
-    <button onclick={handleBulkCreate}>Create Tables</button>
-  </div>
-
-  <div class="toolbar-separator"></div>
 
   <div class="toolbar-group">
     <button onclick={undo} disabled={!getCanUndo()} title="Undo (Ctrl+Z)"
@@ -162,12 +128,6 @@
     display: flex;
     align-items: center;
     gap: 4px;
-  }
-
-  .toolbar-group input[type="number"] {
-    width: 50px;
-    padding: 4px 6px;
-    font-size: 13px;
   }
 
   .toolbar-separator {
