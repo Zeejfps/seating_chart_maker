@@ -80,6 +80,17 @@ export function exportGuestListCsv(guests: Guest[], tables: Table[]): void {
   downloadBlob(blob, "seating-chart.csv");
 }
 
+/** Open a file picker dialog and return the selected file, or null if cancelled. */
+export function pickFile(accept: string): Promise<File | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = accept;
+    input.onchange = () => resolve(input.files?.[0] ?? null);
+    input.click();
+  });
+}
+
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

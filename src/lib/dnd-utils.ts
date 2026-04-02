@@ -1,6 +1,7 @@
 import { getGuests } from "./state.svelte";
 import { executeCommand } from "./command-history.svelte";
-import { AssignGuestCommand } from "./commands";
+import { AssignGuestCommand, ReorderGuestsCommand } from "./commands";
+import type { Guest } from "./types";
 
 /** Style a dragged guest element as a compact pill. */
 export function transformDraggedElement(el?: HTMLElement): void {
@@ -30,4 +31,14 @@ export function assignGuestIfChanged(
     return true;
   }
   return false;
+}
+
+/** If the order of guest IDs changed between newItems and oldItems, execute a ReorderGuestsCommand. */
+export function reorderIfChanged(newItems: Guest[], oldItems: Guest[]): void {
+  const newOrder = newItems.map((g) => g.id);
+  const oldOrder = oldItems.map((g) => g.id);
+  const changed = newOrder.some((id, i) => id !== oldOrder[i]);
+  if (changed) {
+    executeCommand(new ReorderGuestsCommand(newOrder, oldOrder));
+  }
 }

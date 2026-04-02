@@ -6,7 +6,7 @@
   import { CANVAS_W, CANVAS_H, snapToGrid } from "../grid";
   import { assignGuestIfChanged } from "../dnd-utils";
   import { buildNewTable } from "../table-factory";
-  import type { Guest } from "../types";
+  import type { Guest, Table } from "../types";
   import TableCircle from "./TableCircle.svelte";
 
   interface Props {
@@ -38,6 +38,33 @@
   let dragOffsetX = 0;
   let dragOffsetY = 0;
   let didDragMove = false;
+
+  const TABLE_RADIUS = 70;
+  const MIN_ZOOM = 0.25;
+  const MAX_ZOOM = 2;
+
+  function clampZoom(value: number): number {
+    return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
+  }
+
+  function calculateTableBounds(tables: Table[]): {
+    minX: number;
+    minY: number;
+    maxX: number;
+    maxY: number;
+  } {
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
+    for (const t of tables) {
+      minX = Math.min(minX, t.x - TABLE_RADIUS);
+      minY = Math.min(minY, t.y - TABLE_RADIUS);
+      maxX = Math.max(maxX, t.x + TABLE_RADIUS);
+      maxY = Math.max(maxY, t.y + TABLE_RADIUS);
+    }
+    return { minX, minY, maxX, maxY };
+  }
 
   function viewportToCanvas(
     clientX: number,
@@ -75,38 +102,33 @@
     }
   }
 
+  function finalizePan() {
+    const didPan = panX !== panStartX || panY !== panStartY;
+    isPanning = false;
+    if (!didPan) onselecttable(null);
+  }
+
+  function finalizeTableDrag() {
+    const snappedX = Math.max(0, Math.min(CANVAS_W, snapToGrid(dragCurrentX)));
+    const snappedY = Math.max(0, Math.min(CANVAS_H, snapToGrid(dragCurrentY)));
+    didDragMove = snappedX !== dragStartX || snappedY !== dragStartY;
+    if (didDragMove) {
+      executeCommand(
+        new MoveTableCommand(
+          dragTableId!,
+          dragStartX,
+          dragStartY,
+          snappedX,
+          snappedY,
+        ),
+      );
+    }
+    dragTableId = null;
+  }
+
   function handleWindowMouseUp() {
-    if (isPanning) {
-      const didPan = panX !== panStartX || panY !== panStartY;
-      isPanning = false;
-      if (!didPan) {
-        onselecttable(null);
-      }
-      return;
-    }
-    if (dragTableId) {
-      const snappedX = Math.max(
-        0,
-        Math.min(CANVAS_W, snapToGrid(dragCurrentX)),
-      );
-      const snappedY = Math.max(
-        0,
-        Math.min(CANVAS_H, snapToGrid(dragCurrentY)),
-      );
-      didDragMove = snappedX !== dragStartX || snappedY !== dragStartY;
-      if (didDragMove) {
-        executeCommand(
-          new MoveTableCommand(
-            dragTableId,
-            dragStartX,
-            dragStartY,
-            snappedX,
-            snappedY,
-          ),
-        );
-      }
-      dragTableId = null;
-    }
+    if (isPanning) return finalizePan();
+    if (dragTableId) finalizeTableDrag();
   }
 
   // --- Table drag ---
@@ -139,31 +161,36 @@
     onselecttable(selectedTableId === tableId ? null : tableId);
   }
 
-  // --- Zoom ---
+  function handleZoomWheel(e: WheelEvent) {
+    const rect = viewportEl!.getBoundingClientRect();
+    const pointerX = e.clientX - rect.left;
+    const pointerY = e.clientY - rect.top;
+
+    const oldZoom = zoom;
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    const newZoom = clampZoom(oldZoom * delta);
+
+    panX = pointerX - (pointerX - panX) * (newZoom / oldZoom);
+    panY = pointerY - (pointerY - panY) * (newZoom / oldZoom);
+    zoom = newZoom;
+  }
+
+  function handleScrollPan(e: WheelEvent) {
+    if (e.shiftKey) {
+      panX -= e.deltaY;
+    } else {
+      panX -= e.deltaX;
+      panY -= e.deltaY;
+    }
+  }
+
   function handleWheel(e: WheelEvent) {
     if (!viewportEl) return;
-
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
-      const rect = viewportEl.getBoundingClientRect();
-      const pointerX = e.clientX - rect.left;
-      const pointerY = e.clientY - rect.top;
-
-      const oldZoom = zoom;
-      const delta = e.deltaY > 0 ? 0.9 : 1.1;
-      const newZoom = Math.min(2, Math.max(0.25, oldZoom * delta));
-
-      panX = pointerX - (pointerX - panX) * (newZoom / oldZoom);
-      panY = pointerY - (pointerY - panY) * (newZoom / oldZoom);
-      zoom = newZoom;
+      handleZoomWheel(e);
     } else {
-      // Scroll to pan
-      if (e.shiftKey) {
-        panX -= e.deltaY;
-      } else {
-        panX -= e.deltaX;
-        panY -= e.deltaY;
-      }
+      handleScrollPan(e);
     }
   }
 
@@ -180,7 +207,6 @@
     onselecttable(tableId);
   }
 
-  // --- Fit to view ---
   function fitToView() {
     if (!viewportEl) return;
     const tables = getTables();
@@ -192,28 +218,17 @@
     }
 
     const padding = 80;
-    let minX = Infinity,
-      minY = Infinity,
-      maxX = -Infinity,
-      maxY = -Infinity;
-    for (const t of tables) {
-      minX = Math.min(minX, t.x - 70);
-      minY = Math.min(minY, t.y - 70);
-      maxX = Math.max(maxX, t.x + 70);
-      maxY = Math.max(maxY, t.y + 70);
-    }
+    const { minX, minY, maxX, maxY } = calculateTableBounds(tables);
+    const rect = viewportEl.getBoundingClientRect();
 
     const contentW = maxX - minX + padding * 2;
     const contentH = maxY - minY + padding * 2;
-    const rect = viewportEl.getBoundingClientRect();
-
-    const scaleX = rect.width / contentW;
-    const scaleY = rect.height / contentH;
-    const newZoom = Math.min(2, Math.max(0.25, Math.min(scaleX, scaleY)));
+    const newZoom = clampZoom(
+      Math.min(rect.width / contentW, rect.height / contentH),
+    );
 
     const centerX = (minX + maxX) / 2;
     const centerY = (minY + maxY) / 2;
-
     zoom = newZoom;
     panX = rect.width / 2 - centerX * newZoom;
     panY = rect.height / 2 - centerY * newZoom;

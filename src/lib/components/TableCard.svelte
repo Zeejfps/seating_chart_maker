@@ -5,10 +5,14 @@
     UnassignGuestCommand,
     RenameTableCommand,
     ChangeTableCapacityCommand,
-    ReorderGuestsCommand,
   } from "../commands";
   import { isDndActive, setDndActive } from "../state.svelte";
-  import { transformDraggedElement, assignGuestIfChanged } from "../dnd-utils";
+  import {
+    transformDraggedElement,
+    assignGuestIfChanged,
+    reorderIfChanged,
+  } from "../dnd-utils";
+  import { getCapacityStatus } from "../helpers";
   import InlineEdit from "./InlineEdit.svelte";
   import TrashIcon from "./icons/TrashIcon.svelte";
   import { dndzone } from "svelte-dnd-action";
@@ -22,11 +26,7 @@
   let { table, tableGuests, onshowmodal }: Props = $props();
 
   let capacityStatus = $derived(
-    tableGuests.length >= table.capacity
-      ? tableGuests.length > table.capacity
-        ? "over"
-        : "at"
-      : "under",
+    getCapacityStatus(tableGuests.length, table.capacity),
   );
 
   // Local copy for svelte-dnd-action
@@ -75,12 +75,7 @@
       if (assignGuestIfChanged(item.id, table.id)) hadNewAssignments = true;
     }
     if (!hadNewAssignments) {
-      const newOrder = newItems.map((g) => g.id);
-      const oldOrder = tableGuests.map((g) => g.id);
-      const orderChanged = newOrder.some((id, i) => id !== oldOrder[i]);
-      if (orderChanged) {
-        executeCommand(new ReorderGuestsCommand(newOrder, oldOrder));
-      }
+      reorderIfChanged(newItems, tableGuests);
     }
     localItems = newItems;
   }

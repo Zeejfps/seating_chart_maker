@@ -19,6 +19,7 @@
     exportSnapshot,
     importSnapshot,
     exportGuestListCsv,
+    pickFile,
   } from "../persistence";
   import { findOpenSlots } from "../grid";
 
@@ -59,30 +60,24 @@
     showExportMenu = false;
   }
 
-  function handleImportSnapshot() {
+  async function handleImportSnapshot() {
     showImportMenu = false;
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json,application/json";
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      try {
-        const state = await importSnapshot(file);
-        if (getGuests().length > 0 || getTables().length > 0) {
-          onshowmodal("snapshot-import", state);
-        } else {
-          clearHistory();
-          replaceAll(state);
-        }
-      } catch {
-        onshowmodal(
-          "error",
-          "Invalid snapshot file. Please check the file format.",
-        );
+    const file = await pickFile(".json,application/json");
+    if (!file) return;
+    try {
+      const state = await importSnapshot(file);
+      if (getGuests().length > 0 || getTables().length > 0) {
+        onshowmodal("snapshot-import", state);
+      } else {
+        clearHistory();
+        replaceAll(state);
       }
-    };
-    input.click();
+    } catch {
+      onshowmodal(
+        "error",
+        "Invalid snapshot file. Please check the file format.",
+      );
+    }
   }
 
   function handleClickOutside() {

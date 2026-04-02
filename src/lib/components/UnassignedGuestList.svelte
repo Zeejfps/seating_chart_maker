@@ -8,10 +8,10 @@
   import {
     AddGuestCommand,
     UnassignGuestCommand,
-    ReorderGuestsCommand,
     BatchCommand,
   } from "../commands";
-  import { transformDraggedElement } from "../dnd-utils";
+  import { transformDraggedElement, reorderIfChanged } from "../dnd-utils";
+  import { pickFile } from "../persistence";
   import type { Guest } from "../types";
   import GuestItem from "./GuestItem.svelte";
   import { dndzone } from "svelte-dnd-action";
@@ -75,32 +75,26 @@
     }
   }
 
-  function handleCsvImport() {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".csv,text/csv";
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      const text = await file.text();
-      const names = parseCsv(text);
-      if (!names.length) return;
+  async function handleCsvImport() {
+    const file = await pickFile(".csv,text/csv");
+    if (!file) return;
+    const text = await file.text();
+    const names = parseCsv(text);
+    if (!names.length) return;
 
-      if (getGuests().length === 0) {
-        const cmds = names.map(
-          (name) =>
-            new AddGuestCommand({
-              id: crypto.randomUUID(),
-              name,
-              tableId: null,
-            }),
-        );
-        executeCommand(new BatchCommand(cmds, "Import guest list"));
-      } else {
-        onshowmodal("csv-import", names);
-      }
-    };
-    input.click();
+    if (getGuests().length === 0) {
+      const cmds = names.map(
+        (name) =>
+          new AddGuestCommand({
+            id: crypto.randomUUID(),
+            name,
+            tableId: null,
+          }),
+      );
+      executeCommand(new BatchCommand(cmds, "Import guest list"));
+    } else {
+      onshowmodal("csv-import", names);
+    }
   }
 
   function handleDndConsider(e: CustomEvent) {
@@ -122,12 +116,7 @@
       }
     }
     if (!hadUnassignments) {
-      const newOrder = newItems.map((g) => g.id);
-      const oldOrder = filteredGuests.map((g) => g.id);
-      const orderChanged = newOrder.some((id, i) => id !== oldOrder[i]);
-      if (orderChanged) {
-        executeCommand(new ReorderGuestsCommand(newOrder, oldOrder));
-      }
+      reorderIfChanged(newItems, filteredGuests);
     }
     localItems = newItems;
   }

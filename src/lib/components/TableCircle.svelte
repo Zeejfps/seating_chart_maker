@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Guest, Table } from "../types";
+  import { getCapacityStatus } from "../helpers";
   import { dndzone } from "svelte-dnd-action";
 
   interface Props {
@@ -32,13 +33,7 @@
     ondndfinalize,
   }: Props = $props();
 
-  let capacityStatus = $derived(
-    guestCount >= table.capacity
-      ? guestCount > table.capacity
-        ? "over"
-        : "at"
-      : "under",
-  );
+  let capacityStatus = $derived(getCapacityStatus(guestCount, table.capacity));
 </script>
 
 <div
