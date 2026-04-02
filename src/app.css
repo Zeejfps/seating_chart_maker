@@ -241,11 +241,6 @@ input:focus {
   background: var(--accent-bg);
 }
 
-.guest-item.selected {
-  background: var(--accent-bg);
-  outline: 2px solid var(--accent-border);
-}
-
 .grip-handle {
   display: flex;
   align-items: center;
@@ -380,10 +375,6 @@ input:focus {
   flex-direction: column;
   overflow: hidden;
   transition: box-shadow 0.15s;
-}
-
-.table-card.drop-target {
-  box-shadow: 0 0 0 2px var(--accent-border);
 }
 
 .table-card.has-room {

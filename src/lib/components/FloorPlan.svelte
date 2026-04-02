@@ -18,20 +18,12 @@
   import { dndzone } from "svelte-dnd-action";
 
   interface Props {
-    selectedGuestId: string | null;
-    onclearselection: () => void;
     selectedTableId: string | null;
     onselecttable: (id: string | null) => void;
     onready?: (api: { panToTable: (tableId: string) => void }) => void;
   }
 
-  let {
-    selectedGuestId,
-    onclearselection,
-    selectedTableId,
-    onselecttable,
-    onready,
-  }: Props = $props();
+  let { selectedTableId, onselecttable, onready }: Props = $props();
 
   const CANVAS_W = 3000;
   const CANVAS_H = 2000;
@@ -151,23 +143,12 @@
     dragOffsetY = canvas.y - table.y;
   }
 
-  // --- Table click (assign / select) ---
+  // --- Table click (select) ---
   function handleTableClick(e: MouseEvent, tableId: string) {
     e.stopPropagation();
     // If we just finished a drag, don't trigger click
     if (didDragMove) {
       didDragMove = false;
-      return;
-    }
-
-    if (selectedGuestId) {
-      const guest = getGuests().find((g) => g.id === selectedGuestId);
-      if (guest) {
-        executeCommand(
-          new AssignGuestCommand(guest.id, tableId, guest.tableId),
-        );
-        onclearselection();
-      }
       return;
     }
 
@@ -309,7 +290,6 @@
     const newMap = new Map(dndItemsByTable);
     newMap.set(tableId, newItems);
     dndItemsByTable = newMap;
-    onclearselection();
   }
 
   function centerView() {
@@ -377,7 +357,6 @@
         class="table-circle"
         class:selected={selectedTableId === table.id}
         class:is-dragging={isDragging}
-        class:drop-target={!!selectedGuestId}
         class:dnd-hover={dndDraggingTable === table.id}
         style="left:{tx}px; top:{ty}px;"
         onmousedown={(e) => handleTableMouseDown(e, table.id)}

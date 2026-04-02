@@ -10,12 +10,10 @@
   import TableCard from "./TableCard.svelte";
 
   interface Props {
-    selectedGuestId: string | null;
-    onclearselection: () => void;
     onshowmodal: (type: string, data?: unknown) => void;
   }
 
-  let { selectedGuestId, onclearselection, onshowmodal }: Props = $props();
+  let { onshowmodal }: Props = $props();
 
   function handleAddTable() {
     const pos = getNextTablePosition();
@@ -30,13 +28,11 @@
   }
 </script>
 
-<div class="table-grid" role="presentation" onclick={onclearselection}>
+<div class="table-grid" role="presentation">
   {#each getTables() as table (table.id)}
     <TableCard
       {table}
       tableGuests={getGuestsByTable().get(table.id) ?? []}
-      {selectedGuestId}
-      {onclearselection}
       {onshowmodal}
     />
   {/each}

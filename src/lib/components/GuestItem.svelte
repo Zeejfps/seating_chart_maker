@@ -6,19 +6,11 @@
 
   interface Props {
     guest: Guest;
-    selectedGuestId: string | null;
-    onselect: (id: string) => void;
     showRemove?: boolean;
     badge?: Snippet;
   }
 
-  let {
-    guest,
-    selectedGuestId,
-    onselect,
-    showRemove = true,
-    badge,
-  }: Props = $props();
+  let { guest, showRemove = true, badge }: Props = $props();
 
   let editing = $state(false);
   let editValue = $state("");
@@ -58,10 +50,6 @@
     }
   }
 
-  function handleClick() {
-    onselect(guest.id);
-  }
-
   function handleDblClick(e: MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
@@ -71,15 +59,13 @@
 
 <div
   class="guest-item"
-  class:selected={guest.id === selectedGuestId}
   role="button"
   tabindex="0"
-  onclick={handleClick}
   ondblclick={handleDblClick}
   onkeydown={(e) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      handleClick();
+      startEdit();
     }
   }}
 >

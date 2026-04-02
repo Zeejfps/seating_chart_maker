@@ -15,18 +15,10 @@
   interface Props {
     table: Table;
     tableGuests: Guest[];
-    selectedGuestId: string | null;
-    onclearselection: () => void;
     onshowmodal: (type: string, data?: unknown) => void;
   }
 
-  let {
-    table,
-    tableGuests,
-    selectedGuestId,
-    onclearselection,
-    onshowmodal,
-  }: Props = $props();
+  let { table, tableGuests, onshowmodal }: Props = $props();
 
   let capacityStatus = $derived(
     tableGuests.length >= table.capacity
@@ -65,19 +57,6 @@
   function handleUnassign(e: MouseEvent, guestId: string) {
     e.stopPropagation();
     executeCommand(new UnassignGuestCommand(guestId, table.id));
-  }
-
-  function handleCardClick(e: MouseEvent) {
-    e.stopPropagation();
-    if (selectedGuestId) {
-      const guest = getGuests().find((g) => g.id === selectedGuestId);
-      if (guest) {
-        executeCommand(
-          new AssignGuestCommand(guest.id, table.id, guest.tableId),
-        );
-        onclearselection();
-      }
-    }
   }
 
   function transformDraggedElement(el?: HTMLElement) {
@@ -126,16 +105,13 @@
       }
     }
     localItems = newItems;
-    onclearselection();
   }
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 <div
   class="table-card"
-  class:drop-target={!!selectedGuestId}
   class:has-room={isDndActive() && tableGuests.length < table.capacity}
-  onclick={handleCardClick}
 >
   <div class="table-card-header">
     <span class="table-name">

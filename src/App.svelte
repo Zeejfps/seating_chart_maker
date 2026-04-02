@@ -29,7 +29,6 @@
   import FloorPlan from "./lib/components/FloorPlan.svelte";
   import Modal from "./lib/components/Modal.svelte";
 
-  let selectedGuestId: string | null = $state(null);
   let activeTab: "cards" | "floorplan" = $state("floorplan");
   let selectedTableId: string | null = $state(null);
   let initialized = $state(false);
@@ -78,7 +77,6 @@
       return;
     if (modalType) return;
     if (e.key === "Escape") {
-      selectedGuestId = null;
       selectedTableId = null;
       return;
     }
@@ -159,9 +157,7 @@
 <Toolbar onshowmodal={showModal} />
 <StatsBar />
 <Sidebar
-  {selectedGuestId}
   {selectedTableId}
-  onselect={(id) => (selectedGuestId = selectedGuestId === id ? null : id)}
   onshowmodal={showModal}
   onpantotable={handlePanToTable}
 />
@@ -182,15 +178,9 @@
     >
   </div>
   {#if activeTab === "cards"}
-    <TableGrid
-      {selectedGuestId}
-      onclearselection={() => (selectedGuestId = null)}
-      onshowmodal={showModal}
-    />
+    <TableGrid onshowmodal={showModal} />
   {:else}
     <FloorPlan
-      {selectedGuestId}
-      onclearselection={() => (selectedGuestId = null)}
       {selectedTableId}
       onselecttable={(id) => (selectedTableId = id)}
       onready={(api) => (floorPlanApi = api)}

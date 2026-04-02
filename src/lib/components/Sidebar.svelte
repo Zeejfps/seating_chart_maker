@@ -32,20 +32,12 @@
   import { parseCsv } from "../csv";
 
   interface Props {
-    selectedGuestId: string | null;
     selectedTableId: string | null;
-    onselect: (id: string | null) => void;
     onshowmodal: (type: string, data?: unknown) => void;
     onpantotable: (tableId: string) => void;
   }
 
-  let {
-    selectedGuestId,
-    selectedTableId,
-    onselect,
-    onshowmodal,
-    onpantotable,
-  }: Props = $props();
+  let { selectedTableId, onshowmodal, onpantotable }: Props = $props();
 
   let searchQuery = $state("");
   let addingGuest = $state(false);
@@ -172,7 +164,6 @@
     const current = new Map(localAssignedByTable);
     current.set(tableId, newItems);
     localAssignedByTable = current;
-    onselect(null);
   }
 
   function handleHeaderConsider(tableId: string, e: CustomEvent) {
@@ -209,7 +200,6 @@
     const current = new Map(headerOverlayItems);
     current.set(tableId, []);
     headerOverlayItems = current;
-    onselect(null);
   }
 
   function handleAddGuest() {
@@ -332,7 +322,6 @@
       }
     }
     localItems = newItems;
-    onselect(null);
   }
 </script>
 
@@ -386,7 +375,7 @@
       onfinalize={handleDndFinalize}
     >
       {#each localItems as guest (guest.id)}
-        <GuestItem {guest} {selectedGuestId} onselect={(id) => onselect(id)} />
+        <GuestItem {guest} />
       {/each}
       {#if !localItems.length && !addingGuest}
         <div class="empty-state">
@@ -539,11 +528,7 @@
               >
                 {#if expanded}
                   {#each items as guest (guest.id)}
-                    <GuestItem
-                      {guest}
-                      {selectedGuestId}
-                      onselect={(id) => onselect(id)}
-                    />
+                    <GuestItem {guest} />
                   {/each}
                 {/if}
               </div>
