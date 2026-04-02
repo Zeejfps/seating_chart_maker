@@ -5,6 +5,8 @@
     getGuests,
     getGuestsByTable,
     getTables,
+    getNextTablePosition,
+    getNextTableNum,
     setDndActive,
     isDndActive,
   } from "../state.svelte";
@@ -18,6 +20,7 @@
   import { executeCommand } from "../command-history.svelte";
   import {
     AddGuestCommand,
+    AddTableCommand,
     UnassignGuestCommand,
     AssignGuestCommand,
     ReorderGuestsCommand,
@@ -285,6 +288,18 @@
     el.style.fontWeight = "500";
   }
 
+  function handleAddTable() {
+    const pos = getNextTablePosition();
+    executeCommand(
+      new AddTableCommand({
+        id: crypto.randomUUID(),
+        name: String(getNextTableNum()),
+        capacity: 8,
+        ...pos,
+      }),
+    );
+  }
+
   function handleDndConsider(e: CustomEvent) {
     dragging = true;
     draggingAssignedTable = null;
@@ -387,16 +402,29 @@
     </div>
 
     <div class="assigned-section">
-      <button
-        class="section-toggle"
-        onclick={() => (assignedExpanded = !assignedExpanded)}
-      >
-        <span class="toggle-arrow" class:expanded={assignedExpanded}
-          >&#9654;</span
+      <div class="section-header">
+        <button
+          class="section-toggle"
+          onclick={() => (assignedExpanded = !assignedExpanded)}
         >
-        Assigned
-        <span class="section-count">{totalFilteredAssigned}</span>
-      </button>
+          <span class="toggle-arrow" class:expanded={assignedExpanded}
+            >&#9654;</span
+          >
+          Tables
+          <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+          <span
+            class="add-table-btn-sidebar"
+            title="Add table"
+            role="button"
+            tabindex="-1"
+            onclick={(e: MouseEvent) => {
+              e.stopPropagation();
+              handleAddTable();
+            }}>+ Add</span
+          >
+          <span class="section-count">{totalFilteredAssigned}</span>
+        </button>
+      </div>
 
       {#if assignedExpanded}
         <div class="assigned-groups">

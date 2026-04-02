@@ -772,24 +772,23 @@ input:focus {
 }
 
 .section-toggle {
-  width: 100%;
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  flex: 1;
+  padding: 4px 16px 4px 12px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text);
   background: none;
   border: none;
-  border-radius: 0;
+  border-radius: 4px;
   cursor: pointer;
 }
 
 .section-toggle:hover {
   background: var(--accent-bg);
+  color: var(--accent);
 }
 
 .toggle-arrow {
@@ -803,13 +802,45 @@ input:focus {
 }
 
 .section-count {
-  margin-left: auto;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0 7px;
+  font-weight: 400;
   font-size: 11px;
-  line-height: 1.6;
+  color: var(--text);
+  opacity: 0.7;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.add-table-btn-sidebar {
+  margin-left: auto;
+  margin-right: 4px;
+  opacity: 0;
+  color: var(--text);
+  padding: 1px 8px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  border-radius: 10px;
+  flex-shrink: 0;
+  line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 500;
+  transition: opacity 0.1s;
+}
+
+.section-toggle:hover .add-table-btn-sidebar {
+  opacity: 0.5;
+}
+
+.add-table-btn-sidebar:hover {
+  opacity: 1;
+  color: var(--accent);
 }
 
 .table-group {
@@ -949,9 +980,12 @@ button.danger:hover {
 }
 
 .assigned-guest-list {
-  min-height: 32px;
   padding: 4px 8px;
   padding-left: 40px;
+}
+
+.assigned-guest-list:empty {
+  padding: 0;
 }
 
 .assigned-guest-list.collapsed {
