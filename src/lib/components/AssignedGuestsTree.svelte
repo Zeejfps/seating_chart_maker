@@ -61,8 +61,9 @@
         requestAnimationFrame(() => {
           flashTableId = id;
           const el = tableToggleRefs.get(id);
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          const group = el?.closest(".table-group");
+          if (group) {
+            group.scrollIntoView({ behavior: "smooth", block: "nearest" });
           }
         });
       } else if (!id) {
