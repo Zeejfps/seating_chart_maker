@@ -40,8 +40,8 @@
   let didDragMove = false;
 
   const TABLE_RADIUS = 70;
-  const MIN_ZOOM = 0.25;
-  const MAX_ZOOM = 2;
+  const MIN_ZOOM = 0.75;
+  const MAX_ZOOM = 2.5;
 
   function clampZoom(value: number): number {
     return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
@@ -161,18 +161,56 @@
     onselecttable(selectedTableId === tableId ? null : tableId);
   }
 
+  // Zoom editing state
+  let editingZoom = $state(false);
+  let zoomInputValue = $state("");
+
   function handleZoomWheel(e: WheelEvent) {
     const rect = viewportEl!.getBoundingClientRect();
     const pointerX = e.clientX - rect.left;
     const pointerY = e.clientY - rect.top;
 
     const oldZoom = zoom;
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newZoom = clampZoom(oldZoom * delta);
+    const zoomSensitivity = 0.005;
+    const newZoom = clampZoom(oldZoom * (1 - e.deltaY * zoomSensitivity));
 
     panX = pointerX - (pointerX - panX) * (newZoom / oldZoom);
     panY = pointerY - (pointerY - panY) * (newZoom / oldZoom);
     zoom = newZoom;
+  }
+
+  function zoomToCenter(newZoomValue: number) {
+    if (!viewportEl) return;
+    const rect = viewportEl.getBoundingClientRect();
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+    const oldZoom = zoom;
+    const clamped = clampZoom(newZoomValue);
+    panX = cx - (cx - panX) * (clamped / oldZoom);
+    panY = cy - (cy - panY) * (clamped / oldZoom);
+    zoom = clamped;
+  }
+
+  function handleZoomInput(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const parsed = parseFloat(input.value);
+    if (!isNaN(parsed)) {
+      zoomToCenter(parsed / 100);
+    }
+    editingZoom = false;
+  }
+
+  function handleZoomInputKeydown(e: KeyboardEvent) {
+    if (e.key === "Enter") {
+      (e.target as HTMLInputElement).blur();
+    } else if (e.key === "Escape") {
+      editingZoom = false;
+    }
+  }
+
+  function autoFocusSelect(node: HTMLInputElement) {
+    node.focus();
+    node.select();
   }
 
   function handleScrollPan(e: WheelEvent) {
@@ -354,7 +392,27 @@
 
   <div class="floor-plan-controls" onmousedown={(e) => e.stopPropagation()}>
     <button onclick={fitToView}>Fit to View</button>
-    <span class="zoom-display">{Math.round(zoom * 100)}%</span>
+    <button class="zoom-btn" onclick={() => zoomToCenter(zoom - 0.1)}>−</button>
+    {#if editingZoom}
+      <input
+        class="zoom-input"
+        type="text"
+        bind:value={zoomInputValue}
+        onblur={handleZoomInput}
+        onkeydown={handleZoomInputKeydown}
+        use:autoFocusSelect
+      />
+    {:else}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <span
+        class="zoom-display"
+        ondblclick={() => {
+          zoomInputValue = String(Math.round(zoom * 100));
+          editingZoom = true;
+        }}>{Math.round(zoom * 100)}%</span
+      >
+    {/if}
+    <button class="zoom-btn" onclick={() => zoomToCenter(zoom + 0.1)}>+</button>
   </div>
 </div>
 
@@ -424,10 +482,35 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   }
 
+  .zoom-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    line-height: 1;
+  }
+
   .zoom-display {
     font-size: 12px;
     color: var(--text);
     min-width: 40px;
     text-align: center;
+    cursor: default;
+    user-select: none;
+  }
+
+  .zoom-input {
+    width: 50px;
+    font-size: 12px;
+    text-align: center;
+    padding: 2px 4px;
+    border: 1px solid var(--accent-border);
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
   }
 </style>
