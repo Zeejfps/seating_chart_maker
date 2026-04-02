@@ -1,5 +1,4 @@
 import type { Guest, Table, ChartState } from "./types";
-import { findOpenSlot } from "./grid";
 
 let _guests: Guest[] = $state([]);
 let _tables: Table[] = $state([]);
@@ -23,10 +22,6 @@ function getTables(): Table[] {
 
 function getUnassignedGuests(): Guest[] {
   return _guests.filter((g) => g.tableId === null);
-}
-
-function getAssignedGuests(): Guest[] {
-  return _guests.filter((g) => g.tableId !== null);
 }
 
 function getGuestsByTable(): Map<string, Guest[]> {
@@ -88,11 +83,6 @@ function getNextTableNum(): number {
   return max + 1;
 }
 
-function getNextTablePosition(): { x: number; y: number } {
-  const occupied = new Set(_tables.map((t) => `${t.x},${t.y}`));
-  return findOpenSlot(occupied);
-}
-
 function replaceAll(state: ChartState) {
   _guests = state.guests;
   _tables = state.tables;
@@ -108,7 +98,6 @@ export {
   getGuests,
   getTables,
   getUnassignedGuests,
-  getAssignedGuests,
   getGuestsByTable,
   updateGuest,
   addGuest,
@@ -120,5 +109,4 @@ export {
   replaceAll,
   getState,
   getNextTableNum,
-  getNextTablePosition,
 };
