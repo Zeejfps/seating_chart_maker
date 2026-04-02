@@ -39,6 +39,17 @@
   let flashTableId: string | null = $state(null);
   let prevSelectedTableId: string | null = null;
 
+  let tableToggleRefs: Map<string, HTMLElement> = new Map();
+
+  function registerToggleRef(node: HTMLElement, tableId: string) {
+    tableToggleRefs.set(tableId, node);
+    return {
+      destroy() {
+        tableToggleRefs.delete(tableId);
+      },
+    };
+  }
+
   $effect(() => {
     const id = selectedTableId;
     untrack(() => {
@@ -49,6 +60,10 @@
         flashTableId = null;
         requestAnimationFrame(() => {
           flashTableId = id;
+          const el = tableToggleRefs.get(id);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }
         });
       } else if (!id) {
         prevSelectedTableId = null;
@@ -200,9 +215,13 @@
           <div
             class="table-subheader"
             class:header-drop-highlight={headerDropTable === table.id}
-            class:highlight-flash={flashTableId === table.id}
           >
-            <button class="table-toggle" onclick={() => toggleTable(table.id)}>
+            <button
+              class="table-toggle"
+              class:highlight-flash={flashTableId === table.id}
+              use:registerToggleRef={table.id}
+              onclick={() => toggleTable(table.id)}
+            >
               <span class="toggle-arrow" class:expanded>&#9654;</span>
               <span class="table-name">Table {table.name}</span>
               <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
@@ -394,10 +413,10 @@
     border-radius: 4px;
   }
 
-  .table-subheader.highlight-flash::before {
+  .table-toggle.highlight-flash::before {
     content: "";
     position: absolute;
-    inset: -4px 8px;
+    inset: 0;
     border-radius: 4px;
     animation: flash-border 1.5s ease-out;
     pointer-events: none;
@@ -438,6 +457,7 @@
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    position: relative;
   }
 
   .table-toggle:hover {
