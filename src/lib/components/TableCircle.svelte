@@ -58,7 +58,7 @@
       style="left: calc(50% + {cx}px - 6px); top: calc(50% + {cy}px - 6px);"
     ></div>
     {#if isOccupied && dndItems[i]}
-      {@const labelRadius = 78}
+      {@const labelRadius = 58}
       {@const lx = Math.cos(angle) * labelRadius}
       {@const ly = Math.sin(angle) * labelRadius}
       <span
