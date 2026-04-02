@@ -57,6 +57,17 @@
       class:occupied={isOccupied}
       style="left: calc(50% + {cx}px - 6px); top: calc(50% + {cy}px - 6px);"
     ></div>
+    {#if isOccupied && dndItems[i]}
+      {@const labelRadius = 78}
+      {@const lx = Math.cos(angle) * labelRadius}
+      {@const ly = Math.sin(angle) * labelRadius}
+      <span
+        class="chair-label"
+        style="left: calc(50% + {lx}px); top: calc(50% + {ly}px);"
+      >
+        {dndItems[i].name.split(" ")[0]}
+      </span>
+    {/if}
   {/each}
   <!-- Hidden dndzone for guest drops -->
   <div
@@ -120,6 +131,17 @@
 
   .chair.occupied {
     background: var(--border);
+  }
+
+  .chair-label {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: 8px;
+    font-weight: 500;
+    color: var(--text-h);
+    white-space: nowrap;
+    pointer-events: none;
+    line-height: 1;
   }
 
   .table-circle:hover {
