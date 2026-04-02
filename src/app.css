@@ -434,10 +434,11 @@ input:focus {
   background: none;
   color: var(--text);
   padding: 0 2px;
-  font-size: 14px;
   cursor: pointer;
   opacity: 0.4;
   line-height: 1;
+  display: flex;
+  align-items: center;
 }
 
 .table-card-header .delete-table-btn:hover {
@@ -821,6 +822,7 @@ input:focus {
   align-items: center;
   width: 100%;
   padding-left: 20px;
+  padding-right: 8px;
   position: relative;
 }
 
@@ -877,7 +879,7 @@ input:focus {
   align-items: center;
   gap: 6px;
   flex: 1;
-  padding: 4px 12px;
+  padding: 4px 16px 4px 12px;
   font-size: 12px;
   font-weight: 600;
   color: var(--text);
@@ -897,7 +899,6 @@ input:focus {
 }
 
 .table-toggle .table-count {
-  margin-left: auto;
   font-weight: 400;
   font-size: 11px;
   color: var(--text);
@@ -905,28 +906,46 @@ input:focus {
 }
 
 .pan-to-table-btn {
+  margin-left: auto;
+}
+
+.pan-to-table-btn,
+.delete-table-btn-sidebar {
   opacity: 0;
-  border: none;
-  background: none;
   color: var(--text);
   padding: 0 4px;
-  margin-right: 8px;
   cursor: pointer;
   border-radius: 4px;
   flex-shrink: 0;
   line-height: 1;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   transition: opacity 0.1s;
 }
 
-.table-subheader:hover .pan-to-table-btn {
+.table-toggle:hover .pan-to-table-btn,
+.table-toggle:hover .delete-table-btn-sidebar {
   opacity: 0.5;
 }
 
 .pan-to-table-btn:hover {
   opacity: 1 !important;
   color: var(--accent);
+}
+
+.delete-table-btn-sidebar:hover {
+  opacity: 1 !important;
+  color: var(--warning-red);
+}
+
+button.danger {
+  background: #e53e3e;
+  color: #fff;
+  border-color: #e53e3e;
+}
+
+button.danger:hover {
+  background: #c53030;
 }
 
 .assigned-guest-list {

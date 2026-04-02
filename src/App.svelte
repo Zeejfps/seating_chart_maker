@@ -3,6 +3,7 @@
   import {
     getGuests,
     getTables,
+    getGuestsByTable,
     getState,
     replaceAll,
   } from "./lib/state.svelte";
@@ -20,7 +21,7 @@
     BatchCommand,
   } from "./lib/commands";
   import { detectMergeChanges } from "./lib/csv";
-  import type { ChartState } from "./lib/types";
+  import type { ChartState, Table } from "./lib/types";
   import Toolbar from "./lib/components/Toolbar.svelte";
   import StatsBar from "./lib/components/StatsBar.svelte";
   import Sidebar from "./lib/components/Sidebar.svelte";
@@ -62,12 +63,20 @@
   });
 
   // Keyboard shortcuts
+  function handleDeleteTableConfirm() {
+    const table = modalData as Table;
+    executeCommand(new RemoveTableCommand(table));
+    if (selectedTableId === table.id) selectedTableId = null;
+    closeModal();
+  }
+
   function handleKeydown(e: KeyboardEvent) {
     if (
       e.target instanceof HTMLInputElement ||
       e.target instanceof HTMLTextAreaElement
     )
       return;
+    if (modalType) return;
     if (e.key === "Escape") {
       selectedGuestId = null;
       selectedTableId = null;
@@ -76,8 +85,7 @@
     if (e.key === "Delete" && selectedTableId && activeTab === "floorplan") {
       const table = getTables().find((t) => t.id === selectedTableId);
       if (table) {
-        executeCommand(new RemoveTableCommand(table));
-        selectedTableId = null;
+        showModal("delete-table", table);
       }
       return;
     }
@@ -177,6 +185,7 @@
     <TableGrid
       {selectedGuestId}
       onclearselection={() => (selectedGuestId = null)}
+      onshowmodal={showModal}
     />
   {:else}
     <FloorPlan
@@ -217,6 +226,26 @@
     {#snippet actions()}
       <button onclick={closeModal}>Cancel</button>
       <button class="primary" onclick={handleSnapshotReplace}>Replace</button>
+    {/snippet}
+  </Modal>
+{/if}
+
+{#if modalType === "delete-table"}
+  {@const table = modalData as Table}
+  {@const guests = getGuestsByTable().get(table.id) ?? []}
+  <Modal title="Delete Table" onclose={closeModal}>
+    {#snippet children()}
+      <p>Delete table "<strong>{table.name}</strong>"?</p>
+      {#if guests.length > 0}
+        <p style="margin-top: 8px; color: var(--warning-red);">
+          {guests.length} guest{guests.length === 1 ? "" : "s"} will be moved to the
+          unassigned list.
+        </p>
+      {/if}
+    {/snippet}
+    {#snippet actions()}
+      <button onclick={closeModal}>Cancel</button>
+      <button class="danger" onclick={handleDeleteTableConfirm}>Delete</button>
     {/snippet}
   </Modal>
 {/if}

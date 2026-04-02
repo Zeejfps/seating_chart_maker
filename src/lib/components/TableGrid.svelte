@@ -12,9 +12,10 @@
   interface Props {
     selectedGuestId: string | null;
     onclearselection: () => void;
+    onshowmodal: (type: string, data?: unknown) => void;
   }
 
-  let { selectedGuestId, onclearselection }: Props = $props();
+  let { selectedGuestId, onclearselection, onshowmodal }: Props = $props();
 
   function handleAddTable() {
     const pos = getNextTablePosition();
@@ -36,6 +37,7 @@
       tableGuests={getGuestsByTable().get(table.id) ?? []}
       {selectedGuestId}
       {onclearselection}
+      {onshowmodal}
     />
   {/each}
 

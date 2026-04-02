@@ -415,31 +415,66 @@
                 >
                   <span class="toggle-arrow" class:expanded>&#9654;</span>
                   <span class="table-name">Table {table.name}</span>
+                  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+                  <span
+                    class="pan-to-table-btn"
+                    title="Pan to table"
+                    role="button"
+                    tabindex="-1"
+                    onclick={(e: MouseEvent) => {
+                      e.stopPropagation();
+                      onpantotable(table.id);
+                    }}
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="22" y1="12" x2="18" y2="12"></line>
+                      <line x1="6" y1="12" x2="2" y2="12"></line>
+                      <line x1="12" y1="6" x2="12" y2="2"></line>
+                      <line x1="12" y1="22" x2="12" y2="18"></line>
+                    </svg>
+                  </span>
+                  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+                  <span
+                    class="delete-table-btn-sidebar"
+                    title="Delete table"
+                    role="button"
+                    tabindex="-1"
+                    onclick={(e: MouseEvent) => {
+                      e.stopPropagation();
+                      onshowmodal("delete-table", table);
+                    }}
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
+                      ></path>
+                      <path d="M10 11v6"></path>
+                      <path d="M14 11v6"></path>
+                      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+                    </svg>
+                  </span>
                   <span class="table-count"
                     >{items.length}/{table.capacity}</span
                   >
-                </button>
-                <button
-                  class="pan-to-table-btn"
-                  title="Pan to table"
-                  onclick={() => onpantotable(table.id)}
-                >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="22" y1="12" x2="18" y2="12"></line>
-                    <line x1="6" y1="12" x2="2" y2="12"></line>
-                    <line x1="12" y1="6" x2="12" y2="2"></line>
-                    <line x1="12" y1="22" x2="12" y2="18"></line>
-                  </svg>
                 </button>
                 <div
                   class="header-drop-overlay"
