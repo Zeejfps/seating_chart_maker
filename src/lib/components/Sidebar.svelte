@@ -24,7 +24,7 @@
   </div>
 
   <div class="sidebar-scroll">
-    <UnassignedGuestList {searchQuery} {onshowmodal} />
+    <UnassignedGuestList {searchQuery} />
     <AssignedGuestsTree
       {searchQuery}
       {selectedTableId}

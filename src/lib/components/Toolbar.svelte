@@ -6,8 +6,11 @@
     undo,
     redo,
     clearHistory,
+    executeCommand,
   } from "../command-history.svelte";
   import { exportSnapshot, importSnapshot, pickFile } from "../persistence";
+  import { AddGuestCommand, BatchCommand } from "../commands";
+  import { parseCsv } from "../csv";
 
   interface Props {
     onshowmodal: (type: string, data?: unknown) => void;
@@ -37,6 +40,28 @@
       );
     }
   }
+
+  async function handleCsvImport() {
+    const file = await pickFile(".csv,text/csv");
+    if (!file) return;
+    const text = await file.text();
+    const names = parseCsv(text);
+    if (!names.length) return;
+
+    if (getGuests().length === 0) {
+      const cmds = names.map(
+        (name: string) =>
+          new AddGuestCommand({
+            id: crypto.randomUUID(),
+            name,
+            tableId: null,
+          }),
+      );
+      executeCommand(new BatchCommand(cmds, "Import guest list"));
+    } else {
+      onshowmodal("csv-import", names);
+    }
+  }
 </script>
 
 <div class="toolbar">
@@ -54,8 +79,14 @@
   <div class="toolbar-separator"></div>
 
   <div class="toolbar-group">
-    <button onclick={handleExport}>Export</button>
-    <button onclick={handleImport}>Import</button>
+    <button onclick={handleCsvImport}>Import Guests</button>
+  </div>
+
+  <div class="toolbar-separator"></div>
+
+  <div class="toolbar-group">
+    <button onclick={handleExport}>Save</button>
+    <button onclick={handleImport}>Load</button>
   </div>
 </div>
 

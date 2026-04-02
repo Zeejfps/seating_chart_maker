@@ -30,28 +30,3 @@ export function findOpenSlot(occupied: Set<string>): { x: number; y: number } {
   }
   return { x: CANVAS_W / 2, y: CANVAS_H / 2 };
 }
-
-/** Find N open grid slots, marking each as occupied as it's claimed. */
-export function findOpenSlots(
-  occupied: Set<string>,
-  count: number,
-): { x: number; y: number }[] {
-  const { startX, startY } = gridStartPosition();
-  const results: { x: number; y: number }[] = [];
-  let slot = 0;
-  for (let i = 0; i < count; i++) {
-    while (slot < 10000) {
-      const x = snapToGrid(startX + (slot % GRID_COLS) * TABLE_SPACING);
-      const y = snapToGrid(
-        startY + Math.floor(slot / GRID_COLS) * TABLE_SPACING,
-      );
-      slot++;
-      if (!occupied.has(`${x},${y}`)) {
-        occupied.add(`${x},${y}`);
-        results.push({ x, y });
-        break;
-      }
-    }
-  }
-  return results;
-}

@@ -5,24 +5,17 @@
     setDndActive,
   } from "../state.svelte";
   import { executeCommand } from "../command-history.svelte";
-  import {
-    AddGuestCommand,
-    UnassignGuestCommand,
-    BatchCommand,
-  } from "../commands";
+  import { AddGuestCommand, UnassignGuestCommand } from "../commands";
   import { transformDraggedElement, reorderIfChanged } from "../dnd-utils";
-  import { pickFile } from "../persistence";
   import type { Guest } from "../types";
   import GuestItem from "./GuestItem.svelte";
   import { dndzone } from "svelte-dnd-action";
-  import { parseCsv } from "../csv";
 
   interface Props {
     searchQuery: string;
-    onshowmodal: (type: string, data?: unknown) => void;
   }
 
-  let { searchQuery, onshowmodal }: Props = $props();
+  let { searchQuery }: Props = $props();
 
   let addingGuest = $state(false);
   let newGuestName = $state("");
@@ -75,28 +68,6 @@
     }
   }
 
-  async function handleCsvImport() {
-    const file = await pickFile(".csv,text/csv");
-    if (!file) return;
-    const text = await file.text();
-    const names = parseCsv(text);
-    if (!names.length) return;
-
-    if (getGuests().length === 0) {
-      const cmds = names.map(
-        (name) =>
-          new AddGuestCommand({
-            id: crypto.randomUUID(),
-            name,
-            tableId: null,
-          }),
-      );
-      executeCommand(new BatchCommand(cmds, "Import guest list"));
-    } else {
-      onshowmodal("csv-import", names);
-    }
-  }
-
   function handleDndConsider(e: CustomEvent) {
     dragging = true;
     setDndActive(true);
@@ -122,9 +93,16 @@
   }
 </script>
 
-<div class="sidebar-actions">
-  <button onclick={handleAddGuest}>+ Add</button>
-  <button onclick={handleCsvImport}>Import CSV</button>
+<div class="section-header">
+  <span class="section-label">Unassigned ({filteredGuests.length})</span>
+  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+  <span
+    class="add-guest-btn"
+    title="Add guest"
+    role="button"
+    tabindex="-1"
+    onclick={handleAddGuest}>+ Add</span
+  >
 </div>
 
 {#if addingGuest}
@@ -140,8 +118,6 @@
     />
   </div>
 {/if}
-
-<div class="section-label">Unassigned ({filteredGuests.length})</div>
 <div
   class="guest-list"
   use:dndzone={{
@@ -178,23 +154,41 @@
 </div>
 
 <style>
-  .sidebar-actions {
+  .section-header {
     display: flex;
-    gap: 6px;
-  }
-
-  .sidebar-actions button {
-    font-size: 13px;
-    padding: 4px 8px;
+    align-items: center;
+    padding: 6px 12px 2px;
   }
 
   .section-label {
-    padding: 6px 12px 2px;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--text);
+  }
+
+  .add-guest-btn {
+    margin-left: auto;
+    color: var(--text);
+    padding: 1px 8px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    border-radius: 10px;
+    flex-shrink: 0;
+    line-height: 1.4;
+    display: inline-flex;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 500;
+    opacity: 0.5;
+    transition: opacity 0.1s;
+  }
+
+  .add-guest-btn:hover {
+    opacity: 1;
+    color: var(--accent);
   }
 
   .guest-list {
