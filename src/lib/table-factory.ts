@@ -2,11 +2,23 @@ import type { Table } from "./types";
 import { getTables, getNextTableNum } from "./state.svelte";
 import { executeCommand } from "./command-history.svelte";
 import { AddTableCommand } from "./commands";
-import { findOpenSlot } from "./grid";
+import { findOpenSlot, snapToGrid } from "./grid";
 
 /** Create and execute a command to add a new table. */
 export function addTable(): void {
   executeCommand(new AddTableCommand(buildNewTable()));
+}
+
+/** Create and execute a command to add a new table at specific canvas coordinates. */
+export function addTableAt(x: number, y: number): void {
+  const table: Table = {
+    id: crypto.randomUUID(),
+    name: String(getNextTableNum()),
+    capacity: 8,
+    x: snapToGrid(x),
+    y: snapToGrid(y),
+  };
+  executeCommand(new AddTableCommand(table));
 }
 
 /** Create a new table with a unique ID, next sequential name, default capacity, and the next open grid position. */

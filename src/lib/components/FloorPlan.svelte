@@ -1,22 +1,30 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { getTables, getGuestsByTable, setDndActive } from "../state.svelte";
+  import {
+    getTables,
+    getGuestsByTable,
+    setDndActive,
+    isDndActive,
+  } from "../state.svelte";
   import { executeCommand } from "../command-history.svelte";
   import { MoveTableCommand } from "../commands";
   import { CANVAS_W, CANVAS_H, snapToGrid } from "../grid";
   import { assignGuestIfChanged } from "../dnd-utils";
   import { TRIGGERS } from "svelte-dnd-action";
   import { addTable } from "../table-factory";
-  import type { Guest, Table } from "../types";
+  import type { Guest, Table, ModalState } from "../types";
   import TableCircle from "./TableCircle.svelte";
+  import ContextMenu, { type ContextMenuState } from "./ContextMenu.svelte";
 
   interface Props {
     selectedTableId: string | null;
+    searchQuery: string;
     onselecttable: (id: string | null) => void;
-    onready?: (api: { panToTable: (tableId: string) => void }) => void;
+    onshowmodal: (modal: ModalState) => void;
   }
 
-  let { selectedTableId, onselecttable, onready }: Props = $props();
+  let { selectedTableId, searchQuery, onselecttable, onshowmodal }: Props =
+    $props();
 
   let viewportEl: HTMLDivElement | undefined = $state();
   let zoom = $state(1);
@@ -39,6 +47,30 @@
   let dragOffsetX = 0;
   let dragOffsetY = 0;
   let didDragMove = false;
+
+  // Context menu state
+  let contextMenu: ContextMenuState | null = $state(null);
+
+  // Search highlighting
+  let highlightedTableIds: Set<string> = $derived.by(() => {
+    if (!searchQuery) return new Set<string>();
+    const q = searchQuery.toLowerCase();
+    const gbt = getGuestsByTable();
+    const ids = new Set<string>();
+    for (const [tableId, guests] of gbt) {
+      if (guests.some((g) => g.name.toLowerCase().includes(q))) {
+        ids.add(tableId);
+      }
+    }
+    // Also match table names
+    for (const t of getTables()) {
+      if (t.name.toLowerCase().includes(q)) {
+        ids.add(t.id);
+      }
+    }
+    return ids;
+  });
+  let isSearching = $derived(searchQuery.length > 0);
 
   const TABLE_RADIUS = 70;
   const MIN_ZOOM = 0.75;
@@ -82,6 +114,7 @@
   // --- Pan ---
   function handleViewportMouseDown(e: MouseEvent) {
     if (e.button !== 0) return;
+    contextMenu = null;
     // Only pan if clicking empty space (not a table circle)
     isPanning = true;
     panStartMouseX = e.clientX;
@@ -136,6 +169,7 @@
   function handleTableMouseDown(e: MouseEvent, tableId: string) {
     if (e.button !== 0) return;
     e.stopPropagation();
+    contextMenu = null;
     const table = getTables().find((t) => t.id === tableId);
     if (!table) return;
 
@@ -150,7 +184,7 @@
     dragOffsetY = canvas.y - table.y;
   }
 
-  // --- Table click (select) ---
+  // --- Table click (select + context menu) ---
   function handleTableClick(e: MouseEvent, tableId: string) {
     e.stopPropagation();
     // If we just finished a drag, don't trigger click
@@ -159,7 +193,38 @@
       return;
     }
 
-    onselecttable(selectedTableId === tableId ? null : tableId);
+    if (isDndActive()) return;
+
+    onselecttable(tableId);
+    contextMenu = {
+      x: e.clientX,
+      y: e.clientY,
+      context: { type: "table", tableId },
+    };
+  }
+
+  // --- Context menu ---
+  function handleCanvasContextMenu(e: MouseEvent) {
+    if (isDndActive()) return;
+    e.preventDefault();
+    const canvasPos = viewportToCanvas(e.clientX, e.clientY);
+    contextMenu = {
+      x: e.clientX,
+      y: e.clientY,
+      context: { type: "canvas", canvasX: canvasPos.x, canvasY: canvasPos.y },
+    };
+  }
+
+  function handleTableContextMenu(e: MouseEvent, tableId: string) {
+    if (isDndActive()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    contextMenu = {
+      x: e.clientX,
+      y: e.clientY,
+      context: { type: "table", tableId },
+    };
+    onselecttable(tableId);
   }
 
   // Zoom editing state
@@ -225,25 +290,13 @@
 
   function handleWheel(e: WheelEvent) {
     if (!viewportEl) return;
+    contextMenu = null;
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
       handleZoomWheel(e);
     } else {
       handleScrollPan(e);
     }
-  }
-
-  // --- Pan to specific table ---
-  function panToTable(tableId: string) {
-    if (!viewportEl) return;
-    const table = getTables().find((t) => t.id === tableId);
-    if (!table) return;
-    const rect = viewportEl.getBoundingClientRect();
-    const targetZoom = Math.max(zoom, 0.8);
-    zoom = targetZoom;
-    panX = rect.width / 2 - table.x * targetZoom;
-    panY = rect.height / 2 - table.y * targetZoom;
-    onselecttable(tableId);
   }
 
   function fitToView() {
@@ -338,7 +391,6 @@
     window.addEventListener("mouseup", handleWindowMouseUp);
     centerView();
     if (getTables().length > 0) hasCentered = true;
-    onready?.({ panToTable });
     return () => {
       window.removeEventListener("mousemove", handleWindowMouseMove);
       window.removeEventListener("mouseup", handleWindowMouseUp);
@@ -363,6 +415,7 @@
   bind:this={viewportEl}
   onmousedown={handleViewportMouseDown}
   onwheel={handleWheel}
+  oncontextmenu={handleCanvasContextMenu}
 >
   <div
     class="floor-plan-canvas"
@@ -377,10 +430,12 @@
         isSelected={selectedTableId === table.id}
         {isDragging}
         isDndHover={dndDraggingTable === table.id}
+        isDimmed={isSearching && !highlightedTableIds.has(table.id)}
         x={isDragging ? dragCurrentX : table.x}
         y={isDragging ? dragCurrentY : table.y}
         onmousedown={(e) => handleTableMouseDown(e, table.id)}
         onclick={(e) => handleTableClick(e, table.id)}
+        oncontextmenu={(e) => handleTableContextMenu(e, table.id)}
         ondndconsider={(e) => handleDndConsider(table.id, e)}
         ondndfinalize={(e) => handleDndFinalize(table.id, e)}
       />
@@ -419,6 +474,12 @@
     {/if}
     <button class="zoom-btn" onclick={() => zoomToCenter(zoom + 0.1)}>+</button>
   </div>
+
+  <ContextMenu
+    menu={contextMenu}
+    onclose={() => (contextMenu = null)}
+    {onshowmodal}
+  />
 </div>
 
 <style>
