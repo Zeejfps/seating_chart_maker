@@ -14,10 +14,18 @@
   import type { ModalState } from "../types";
 
   interface Props {
+    searchQuery: string;
+    searchInputEl?: HTMLInputElement;
+    onsearch: (query: string) => void;
     onshowmodal: (modal: ModalState) => void;
   }
 
-  let { onshowmodal }: Props = $props();
+  let {
+    searchQuery,
+    searchInputEl = $bindable(),
+    onsearch,
+    onshowmodal,
+  }: Props = $props();
 
   function handleExport() {
     exportSnapshot(getState());
@@ -68,6 +76,17 @@
 <div class="toolbar">
   <h1>Wedding Seating Chart</h1>
 
+  <div class="toolbar-separator"></div>
+
+  <input
+    bind:this={searchInputEl}
+    class="toolbar-search"
+    type="search"
+    placeholder="Search guests..."
+    value={searchQuery}
+    oninput={(e) => onsearch((e.target as HTMLInputElement).value)}
+  />
+
   <div class="toolbar-group">
     <button onclick={undo} disabled={!getCanUndo()} title="Undo (Ctrl+Z)"
       >Undo</button
@@ -104,13 +123,19 @@
 
   .toolbar h1 {
     font-size: 18px;
-    margin-right: auto;
   }
 
   .toolbar-group {
     display: flex;
     align-items: center;
     gap: 4px;
+  }
+
+  .toolbar-search {
+    flex: 0 1 250px;
+    font-size: 13px;
+    padding: 5px 10px;
+    margin-right: auto;
   }
 
   .toolbar-separator {

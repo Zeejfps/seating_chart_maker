@@ -25,11 +25,9 @@
   import Toolbar from "./lib/components/Toolbar.svelte";
   import StatsBar from "./lib/components/StatsBar.svelte";
   import Sidebar from "./lib/components/Sidebar.svelte";
-  import TableGrid from "./lib/components/TableGrid.svelte";
   import FloorPlan from "./lib/components/FloorPlan.svelte";
   import Modal from "./lib/components/Modal.svelte";
 
-  let activeTab: "cards" | "floorplan" = $state("floorplan");
   let selectedTableId: string | null = $state(null);
   let initialized = $state(false);
   let searchQuery = $state("");
@@ -77,11 +75,7 @@
       selectedTableId = null;
       return;
     }
-    if (
-      (e.key === "Delete" || e.key === "Backspace") &&
-      selectedTableId &&
-      activeTab === "floorplan"
-    ) {
+    if ((e.key === "Delete" || e.key === "Backspace") && selectedTableId) {
       const table = getTables().find((t) => t.id === selectedTableId);
       if (table) {
         showModal({ type: "delete-table", table });
@@ -90,9 +84,7 @@
     }
     if ((e.ctrlKey || e.metaKey) && e.key === "f") {
       e.preventDefault();
-      if (activeTab === "floorplan") {
-        searchInputEl?.focus();
-      }
+      searchInputEl?.focus();
       return;
     }
     if ((e.ctrlKey || e.metaKey) && e.key === "z") {
@@ -163,46 +155,21 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<Toolbar onshowmodal={showModal} />
+<Toolbar
+  {searchQuery}
+  bind:searchInputEl
+  onsearch={(q) => (searchQuery = q)}
+  onshowmodal={showModal}
+/>
 <StatsBar />
 <Sidebar {searchQuery} onshowmodal={showModal} />
 <div class="main-area">
-  <div class="view-tabs">
-    <button
-      class:active={activeTab === "floorplan"}
-      onclick={() => {
-        activeTab = "floorplan";
-      }}>Floor Plan</button
-    >
-    <button
-      class:active={activeTab === "cards"}
-      onclick={() => {
-        activeTab = "cards";
-        selectedTableId = null;
-        searchQuery = "";
-      }}>Card View</button
-    >
-  </div>
-  {#if activeTab === "floorplan"}
-    <div class="search-bar">
-      <input
-        bind:this={searchInputEl}
-        type="search"
-        placeholder="Search guests..."
-        bind:value={searchQuery}
-      />
-    </div>
-  {/if}
-  {#if activeTab === "cards"}
-    <TableGrid onshowmodal={showModal} />
-  {:else}
-    <FloorPlan
-      {selectedTableId}
-      {searchQuery}
-      onselecttable={(id) => (selectedTableId = id)}
-      onshowmodal={showModal}
-    />
-  {/if}
+  <FloorPlan
+    {selectedTableId}
+    {searchQuery}
+    onselecttable={(id) => (selectedTableId = id)}
+    onshowmodal={showModal}
+  />
 </div>
 
 {#if modal?.type === "csv-import"}
@@ -309,48 +276,5 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-  }
-
-  .view-tabs {
-    display: flex;
-    gap: 0;
-    border-bottom: 1px solid var(--border);
-    padding: 0 16px;
-    flex-shrink: 0;
-  }
-
-  .view-tabs button {
-    border: none;
-    border-bottom: 2px solid transparent;
-    border-radius: 0;
-    background: none;
-    padding: 8px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-    cursor: pointer;
-  }
-
-  .view-tabs button:hover {
-    color: var(--text-h);
-    background: none;
-  }
-
-  .view-tabs button.active {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-  }
-
-  .search-bar {
-    padding: 8px 16px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-
-  .search-bar input {
-    width: 100%;
-    max-width: 300px;
-    font-size: 13px;
-    padding: 5px 10px;
   }
 </style>
