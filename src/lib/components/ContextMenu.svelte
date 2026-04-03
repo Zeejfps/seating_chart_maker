@@ -35,13 +35,38 @@
   // Clamped position to keep menu in viewport
   let clampedX = $state(0);
   let clampedY = $state(0);
+  let positioned = $state(false);
 
+  function clampMenu() {
+    if (!menu || !menuEl) return;
+    const rect = menuEl.getBoundingClientRect();
+    const pad = 8;
+    clampedX = Math.max(
+      pad,
+      Math.min(menu.x, window.innerWidth - rect.width - pad),
+    );
+    clampedY = Math.max(
+      pad,
+      Math.min(menu.y, window.innerHeight - rect.height - pad),
+    );
+    positioned = true;
+  }
+
+  // Re-clamp whenever the menu element resizes (e.g. guest list populating)
+  $effect(() => {
+    if (!menuEl) {
+      positioned = false;
+      return;
+    }
+    const observer = new ResizeObserver(() => clampMenu());
+    observer.observe(menuEl);
+    return () => observer.disconnect();
+  });
+
+  // Re-clamp when menu target changes
   $effect(() => {
     if (menu && menuEl) {
-      const rect = menuEl.getBoundingClientRect();
-      const pad = 8;
-      clampedX = Math.min(menu.x, window.innerWidth - rect.width - pad);
-      clampedY = Math.min(menu.y, window.innerHeight - rect.height - pad);
+      clampMenu();
     }
   });
 
@@ -148,7 +173,9 @@
   <div
     class="context-menu"
     bind:this={menuEl}
-    style="left:{clampedX}px; top:{clampedY}px;"
+    style="left:{clampedX}px; top:{clampedY}px; visibility:{positioned
+      ? 'visible'
+      : 'hidden'};"
     onclick={(e) => e.stopPropagation()}
     onmousedown={(e) => e.stopPropagation()}
   >
@@ -250,6 +277,8 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     padding: 4px 0;
     font-size: 13px;
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
   }
 
   .menu-header {
