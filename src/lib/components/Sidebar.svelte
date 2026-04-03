@@ -11,10 +11,6 @@
 </script>
 
 <aside class="sidebar">
-  <div class="sidebar-header">
-    <h2>Unassigned</h2>
-  </div>
-
   <div class="sidebar-scroll">
     <UnassignedGuestList {searchQuery} {onshowmodal} />
   </div>
@@ -35,17 +31,6 @@
       border-bottom: 1px solid var(--border);
       max-height: 40vh;
     }
-  }
-
-  .sidebar-header {
-    padding: 12px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .sidebar-header h2 {
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
   }
 
   .sidebar-scroll {

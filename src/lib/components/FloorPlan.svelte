@@ -184,7 +184,7 @@
     dragOffsetY = canvas.y - table.y;
   }
 
-  // --- Table click (select) ---
+  // --- Table click (select + context menu) ---
   function handleTableClick(e: MouseEvent, tableId: string) {
     e.stopPropagation();
     // If we just finished a drag, don't trigger click
@@ -193,7 +193,14 @@
       return;
     }
 
-    onselecttable(selectedTableId === tableId ? null : tableId);
+    if (isDndActive()) return;
+
+    onselecttable(tableId);
+    contextMenu = {
+      x: e.clientX,
+      y: e.clientY,
+      context: { type: "table", tableId },
+    };
   }
 
   // --- Context menu ---
