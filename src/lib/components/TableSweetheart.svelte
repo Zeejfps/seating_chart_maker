@@ -64,8 +64,10 @@
     }
   }}
 >
-  <span class="table-sweetheart-name">{table.name}</span>
-  <CapacityBadge count={guestCount} capacity={table.capacity} size="small" />
+  <div class="table-info" style="transform: rotate(-{table.rotation}deg);">
+    <span class="table-sweetheart-name">{table.name}</span>
+    <CapacityBadge count={guestCount} capacity={table.capacity} size="small" />
+  </div>
 
   <!-- 2 chairs on bottom side -->
   {#each Array(2) as _, i (i)}
@@ -83,7 +85,7 @@
         class="chair-label"
         style="left: {cx}px; top: {SWEETHEART_HEIGHT +
           RECT_CHAIR_OFFSET +
-          6}px;"
+          6}px; transform: translate(-50%, -50%) rotate(-{table.rotation}deg);"
       >
         {dndItems[i].name.split(" ")[0]}
       </span>
@@ -184,6 +186,13 @@
   .table-sweetheart.dimmed {
     opacity: 0.2;
     filter: grayscale(1);
+  }
+
+  .table-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1;
   }
 
   .table-sweetheart-name {

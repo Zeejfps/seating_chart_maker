@@ -68,8 +68,10 @@
     }
   }}
 >
-  <span class="table-rect-name">{table.name}</span>
-  <CapacityBadge count={guestCount} capacity={table.capacity} size="small" />
+  <div class="table-info" style="transform: rotate(-{table.rotation}deg);">
+    <span class="table-rect-name">{table.name}</span>
+    <CapacityBadge count={guestCount} capacity={table.capacity} size="small" />
+  </div>
 
   <!-- Top row of chairs -->
   {#each Array(topSeats) as _, i (i)}
@@ -83,7 +85,8 @@
     {#if isOccupied && dndItems[i]}
       <span
         class="chair-label"
-        style="left: {cx}px; top: {-RECT_CHAIR_OFFSET - 6}px;"
+        style="left: {cx}px; top: {-RECT_CHAIR_OFFSET -
+          6}px; transform: translate(-50%, -50%) rotate(-{table.rotation}deg);"
       >
         {dndItems[i].name.split(" ")[0]}
       </span>
@@ -103,7 +106,9 @@
     {#if isOccupied && dndItems[guestIdx]}
       <span
         class="chair-label"
-        style="left: {cx}px; top: {RECT_HEIGHT + RECT_CHAIR_OFFSET + 6}px;"
+        style="left: {cx}px; top: {RECT_HEIGHT +
+          RECT_CHAIR_OFFSET +
+          6}px; transform: translate(-50%, -50%) rotate(-{table.rotation}deg);"
       >
         {dndItems[guestIdx].name.split(" ")[0]}
       </span>
@@ -204,6 +209,13 @@
   .table-rect.dimmed {
     opacity: 0.2;
     filter: grayscale(1);
+  }
+
+  .table-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1;
   }
 
   .table-rect-name {
