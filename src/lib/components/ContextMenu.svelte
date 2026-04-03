@@ -10,6 +10,8 @@
   import { reorderIfChanged, transformDraggedElement } from "../dnd-utils";
   import { addTableAt } from "../table-factory";
   import { dndzone } from "svelte-dnd-action";
+  import InlineEdit from "./InlineEdit.svelte";
+  import TrashIcon from "./icons/TrashIcon.svelte";
   import type { Guest, Table, ModalState } from "../types";
 
   export type ContextMenuState =
@@ -218,25 +220,21 @@
     onmousedown={(e) => e.stopPropagation()}
   >
     {#if menu.context.type === "table" && table}
-      <div class="menu-header">{table.name}</div>
-      {#if editingTableName}
-        <div class="menu-item">
-          <input
-            class="rename-table-input menu-input"
-            type="text"
-            bind:value={tableNameValue}
-            onblur={commitRenameTable}
-            onkeydown={handleTableNameKeydown}
+      <div class="menu-header">
+        <span class="menu-header-name">
+          <InlineEdit
+            value={table.name}
+            oncommit={(newName) => handleRenameTable(table, newName)}
           />
-        </div>
-      {:else}
-        <button class="menu-item" onclick={startRenameTable}
-          >Rename Table</button
+        </span>
+        <button
+          class="menu-header-delete"
+          title="Delete table"
+          onclick={handleDeleteTable}
         >
-      {/if}
-      <button class="menu-item danger" onclick={handleDeleteTable}
-        >Delete Table</button
-      >
+          <TrashIcon />
+        </button>
+      </div>
 
       {#if localGuests.length > 0}
         <div class="menu-divider"></div>
@@ -263,21 +261,12 @@
           {#each localGuests as guest (guest.id)}
             <div class="menu-guest">
               <span class="grip-handle"></span>
-              {#if editingGuestId === guest.id}
-                <input
-                  class="rename-guest-input menu-input"
-                  data-guest-id={guest.id}
-                  type="text"
-                  bind:value={guestNameValue}
-                  onblur={() => commitRenameGuest(guest)}
-                  onkeydown={(e) => handleGuestNameKeydown(e, guest)}
+              <span class="guest-name">
+                <InlineEdit
+                  value={guest.name}
+                  oncommit={(newName) => handleRenameGuest(guest, newName)}
                 />
-              {:else}
-                <span
-                  class="guest-name"
-                  ondblclick={() => startRenameGuest(guest)}>{guest.name}</span
-                >
-              {/if}
+              </span>
               <div class="guest-actions">
                 <button
                   class="guest-action-btn"
@@ -301,19 +290,7 @@
                   title="Delete"
                   onclick={() => handleDeleteGuest(guest)}
                 >
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    ><path d="M3 6h18" /><path
-                      d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"
-                    /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg
-                  >
+                  <TrashIcon size={12} />
                 </button>
               </div>
             </div>
@@ -332,8 +309,8 @@
   .context-menu {
     position: fixed;
     z-index: 100;
-    min-width: 200px;
-    max-width: 300px;
+    min-width: 240px;
+    max-width: 320px;
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -343,12 +320,45 @@
   }
 
   .menu-header {
-    padding: 6px 12px 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px 6px;
     font-weight: 600;
-    font-size: 12px;
+    font-size: 14px;
+    color: var(--text-h);
+  }
+
+  .menu-header-name {
+    flex: 1;
+    cursor: text;
+    padding: 1px 4px;
+    margin: -1px -4px;
+    border-radius: 4px;
+  }
+
+  .menu-header-name:hover {
+    background: var(--accent-bg);
+  }
+
+  .menu-header-delete {
+    border: none;
+    background: none;
     color: var(--text);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    padding: 2px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    opacity: 0.4;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .menu-header-delete:hover {
+    opacity: 1;
+    color: var(--warning-red);
+    background: var(--warning-red-bg);
   }
 
   .menu-subheader {
@@ -376,11 +386,6 @@
   .menu-item:hover {
     background: var(--accent-bg);
     color: var(--accent);
-  }
-
-  .menu-item.danger:hover {
-    background: var(--warning-red-bg);
-    color: var(--warning-red);
   }
 
   .menu-divider {
