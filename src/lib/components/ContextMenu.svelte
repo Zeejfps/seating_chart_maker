@@ -71,20 +71,6 @@
     };
   });
 
-  // Inline editing state
-  let editingTableName = $state(false);
-  let tableNameValue = $state("");
-  let editingGuestId: string | null = $state(null);
-  let guestNameValue = $state("");
-
-  // Reset editing state when menu opens/closes
-  $effect(() => {
-    if (menu) {
-      editingTableName = false;
-      editingGuestId = null;
-    }
-  });
-
   // Derived data for table context
   let tableId = $derived(
     menu?.context.type === "table" ? menu.context.tableId : null,
@@ -124,35 +110,8 @@
     localGuests = newItems;
   }
 
-  function startRenameTable() {
-    if (!table) return;
-    tableNameValue = table.name;
-    editingTableName = true;
-    requestAnimationFrame(() => {
-      const input = menuEl?.querySelector<HTMLInputElement>(
-        ".rename-table-input",
-      );
-      input?.focus();
-      input?.select();
-    });
-  }
-
-  function commitRenameTable() {
-    const trimmed = tableNameValue.trim();
-    if (table && trimmed && trimmed !== table.name) {
-      executeCommand(new RenameTableCommand(table.id, table.name, trimmed));
-    }
-    editingTableName = false;
-  }
-
-  function handleTableNameKeydown(e: KeyboardEvent) {
-    e.stopPropagation();
-    if (e.key === "Enter") {
-      e.preventDefault();
-      commitRenameTable();
-    } else if (e.key === "Escape") {
-      editingTableName = false;
-    }
+  function handleRenameTable(t: Table, newName: string) {
+    executeCommand(new RenameTableCommand(t.id, t.name, newName));
   }
 
   function handleDeleteTable() {
@@ -161,34 +120,8 @@
     onclose();
   }
 
-  function startRenameGuest(guest: Guest) {
-    editingGuestId = guest.id;
-    guestNameValue = guest.name;
-    requestAnimationFrame(() => {
-      const input = menuEl?.querySelector<HTMLInputElement>(
-        `.rename-guest-input[data-guest-id="${guest.id}"]`,
-      );
-      input?.focus();
-      input?.select();
-    });
-  }
-
-  function commitRenameGuest(guest: Guest) {
-    const trimmed = guestNameValue.trim();
-    if (trimmed && trimmed !== guest.name) {
-      executeCommand(new RenameGuestCommand(guest.id, guest.name, trimmed));
-    }
-    editingGuestId = null;
-  }
-
-  function handleGuestNameKeydown(e: KeyboardEvent, guest: Guest) {
-    e.stopPropagation();
-    if (e.key === "Enter") {
-      e.preventDefault();
-      commitRenameGuest(guest);
-    } else if (e.key === "Escape") {
-      editingGuestId = null;
-    }
+  function handleRenameGuest(guest: Guest, newName: string) {
+    executeCommand(new RenameGuestCommand(guest.id, guest.name, newName));
   }
 
   function handleUnassignGuest(guest: Guest) {
@@ -394,18 +327,6 @@
     margin: 4px 0;
   }
 
-  .menu-input {
-    width: 100%;
-    font: inherit;
-    font-size: 13px;
-    padding: 3px 6px;
-    border: 1px solid var(--accent-border);
-    border-radius: 4px;
-    background: var(--bg);
-    color: var(--text-h);
-    outline: none;
-  }
-
   .menu-guest-list {
     padding: 0;
   }
@@ -429,13 +350,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--text-h);
-    cursor: text;
-    padding: 1px 2px;
-    border-radius: 3px;
-  }
-
-  .menu-guest .guest-name:hover {
-    background: rgba(0, 0, 0, 0.05);
   }
 
   .guest-actions {
