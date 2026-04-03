@@ -6,13 +6,20 @@
     RenameTableCommand,
     RenameGuestCommand,
     UnassignGuestCommand,
+    ChangeTableCapacityCommand,
+    RotateTableCommand,
   } from "../commands";
   import { reorderIfChanged, transformDraggedElement } from "../dnd-utils";
   import { addTableAt } from "../table-factory";
+  import {
+    canChangeCapacity,
+    clampCapacity,
+    SHAPE_DEFAULTS,
+  } from "../table-shapes";
   import { dndzone } from "svelte-dnd-action";
   import InlineEdit from "./InlineEdit.svelte";
   import TrashIcon from "./icons/TrashIcon.svelte";
-  import type { Guest, Table, ModalState } from "../types";
+  import type { Guest, Table, TableShape, ModalState } from "../types";
 
   export type ContextMenuState =
     | { x: number; y: number; context: { type: "table"; tableId: string } }
@@ -161,11 +168,29 @@
     onclose();
   }
 
-  function handleAddTableHere() {
+  function handleAddTableHere(shape: TableShape) {
     if (menu?.context.type === "canvas") {
-      addTableAt(menu.context.canvasX, menu.context.canvasY);
+      addTableAt(menu.context.canvasX, menu.context.canvasY, shape);
     }
     onclose();
+  }
+
+  function handleChangeCapacity(delta: number) {
+    if (!table) return;
+    const newCap = clampCapacity(table.shape, table.capacity + delta);
+    if (newCap !== table.capacity) {
+      executeCommand(
+        new ChangeTableCapacityCommand(table.id, table.capacity, newCap),
+      );
+    }
+  }
+
+  function handleRotateTable() {
+    if (!table) return;
+    const newRotation = (table.rotation + 90) % 360;
+    executeCommand(
+      new RotateTableCommand(table.id, table.rotation, newRotation),
+    );
   }
 </script>
 
@@ -260,9 +285,46 @@
           {/each}
         </div>
       {/if}
+
+      {#if table.shape !== "round" || canChangeCapacity(table.shape)}
+        <div class="menu-divider"></div>
+        <div class="menu-footer">
+          {#if table.shape !== "round"}
+            <button
+              class="footer-btn"
+              title="Rotate 90°"
+              onclick={handleRotateTable}>&#x21bb;</button
+            >
+          {/if}
+          {#if canChangeCapacity(table.shape)}
+            <div class="capacity-stepper">
+              <button
+                class="stepper-btn"
+                disabled={table.capacity <=
+                  SHAPE_DEFAULTS[table.shape].minCapacity ||
+                  guests.length >= table.capacity}
+                onclick={() => handleChangeCapacity(-1)}>&minus;</button
+              >
+              <span class="stepper-value">{table.capacity} seats</span>
+              <button
+                class="stepper-btn"
+                disabled={table.capacity >=
+                  SHAPE_DEFAULTS[table.shape].maxCapacity}
+                onclick={() => handleChangeCapacity(1)}>+</button
+              >
+            </div>
+          {/if}
+        </div>
+      {/if}
     {:else if menu.context.type === "canvas"}
-      <button class="menu-item" onclick={handleAddTableHere}
-        >Add Table Here</button
+      <button class="menu-item" onclick={() => handleAddTableHere("round")}
+        >Add Round Table</button
+      >
+      <button class="menu-item" onclick={() => handleAddTableHere("rectangle")}
+        >Add Rectangle Table</button
+      >
+      <button class="menu-item" onclick={() => handleAddTableHere("sweetheart")}
+        >Add Sweetheart Table</button
       >
     {/if}
   </div>
@@ -333,6 +395,74 @@
     color: var(--text);
     text-transform: uppercase;
     letter-spacing: 0.3px;
+  }
+
+  .menu-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+  }
+
+  .footer-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-h);
+    font-size: 16px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+  }
+
+  .footer-btn:hover {
+    border-color: var(--accent-border);
+    color: var(--accent);
+  }
+
+  .capacity-stepper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .stepper-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-h);
+    font-size: 14px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .stepper-btn:hover:not(:disabled) {
+    border-color: var(--accent-border);
+    color: var(--accent);
+  }
+
+  .stepper-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .stepper-value {
+    font-size: 12px;
+    color: var(--text);
+    min-width: 50px;
+    text-align: center;
   }
 
   .menu-item {

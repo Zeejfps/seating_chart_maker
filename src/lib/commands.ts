@@ -158,6 +158,21 @@ export class ReorderGuestsCommand implements Command {
   }
 }
 
+export class RotateTableCommand implements Command {
+  description = "Rotate table";
+  constructor(
+    private tableId: string,
+    private oldRotation: number,
+    private newRotation: number,
+  ) {}
+  execute() {
+    updateTable(this.tableId, { rotation: this.newRotation });
+  }
+  undo() {
+    updateTable(this.tableId, { rotation: this.oldRotation });
+  }
+}
+
 export class MoveTableCommand implements Command {
   description = "Move table";
   constructor(

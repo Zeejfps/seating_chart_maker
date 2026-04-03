@@ -17,6 +17,17 @@ function backfillTablePositions(tables: Table[]): Table[] {
   }));
 }
 
+function backfillTableFields(tables: Table[]): Table[] {
+  return tables.map((t) => {
+    const raw = t as unknown as Record<string, unknown>;
+    return {
+      ...t,
+      shape: raw.shape ?? "round",
+      rotation: raw.rotation ?? 0,
+    };
+  }) as Table[];
+}
+
 export function saveToLocalStorage(state: ChartState): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -32,7 +43,9 @@ export function loadFromLocalStorage(): ChartState | null {
     const parsed = JSON.parse(raw);
     if (!isValidChartState(parsed)) return null;
     const sanitized = sanitizeChartState(parsed);
-    sanitized.tables = backfillTablePositions(sanitized.tables);
+    sanitized.tables = backfillTableFields(
+      backfillTablePositions(sanitized.tables),
+    );
     return sanitized;
   } catch {
     return null;
@@ -58,7 +71,9 @@ export async function importSnapshot(file: File): Promise<ChartState> {
     throw new Error("Invalid snapshot file");
   }
   const sanitized = sanitizeChartState(parsed);
-  sanitized.tables = backfillTablePositions(sanitized.tables);
+  sanitized.tables = backfillTableFields(
+    backfillTablePositions(sanitized.tables),
+  );
   return sanitized;
 }
 

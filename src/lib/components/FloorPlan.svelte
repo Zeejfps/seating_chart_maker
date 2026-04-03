@@ -12,8 +12,14 @@
   import { assignGuestIfChanged } from "../dnd-utils";
   import { TRIGGERS } from "svelte-dnd-action";
   import { addTable } from "../table-factory";
-  import type { Guest, Table, ModalState } from "../types";
-  import TableCircle from "./TableCircle.svelte";
+  import type { Guest, Table, TableShape, ModalState } from "../types";
+  import {
+    getRectWidth,
+    RECT_HEIGHT,
+    SWEETHEART_WIDTH,
+    SWEETHEART_HEIGHT,
+  } from "../table-shapes";
+  import TableRenderer from "./TableRenderer.svelte";
   import ContextMenu, { type ContextMenuState } from "./ContextMenu.svelte";
 
   interface Props {
@@ -51,6 +57,14 @@
   // Context menu state
   let contextMenu: ContextMenuState | null = $state(null);
 
+  // Add table dropdown
+  let showAddMenu = $state(false);
+
+  function handleAddFromMenu(shape: TableShape) {
+    addTable(shape);
+    showAddMenu = false;
+  }
+
   // Search highlighting
   let highlightedTableIds: Set<string> = $derived.by(() => {
     if (!searchQuery) return new Set<string>();
@@ -72,12 +86,29 @@
   });
   let isSearching = $derived(searchQuery.length > 0);
 
-  const TABLE_RADIUS = 70;
   const MIN_ZOOM = 0.75;
   const MAX_ZOOM = 2.5;
 
   function clampZoom(value: number): number {
     return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
+  }
+
+  function getTableHalfSize(t: Table): { halfW: number; halfH: number } {
+    let halfW: number, halfH: number;
+    if (t.shape === "rectangle") {
+      halfW = getRectWidth(t.capacity) / 2 + 20;
+      halfH = RECT_HEIGHT / 2 + 20;
+    } else if (t.shape === "sweetheart") {
+      halfW = SWEETHEART_WIDTH / 2 + 20;
+      halfH = SWEETHEART_HEIGHT / 2 + 20;
+    } else {
+      return { halfW: 70, halfH: 70 };
+    }
+    // Swap for 90/270 degree rotations
+    if (t.rotation === 90 || t.rotation === 270) {
+      return { halfW: halfH, halfH: halfW };
+    }
+    return { halfW, halfH };
   }
 
   function calculateTableBounds(tables: Table[]): {
@@ -91,10 +122,11 @@
       maxX = -Infinity,
       maxY = -Infinity;
     for (const t of tables) {
-      minX = Math.min(minX, t.x - TABLE_RADIUS);
-      minY = Math.min(minY, t.y - TABLE_RADIUS);
-      maxX = Math.max(maxX, t.x + TABLE_RADIUS);
-      maxY = Math.max(maxY, t.y + TABLE_RADIUS);
+      const { halfW, halfH } = getTableHalfSize(t);
+      minX = Math.min(minX, t.x - halfW);
+      minY = Math.min(minY, t.y - halfH);
+      maxX = Math.max(maxX, t.x + halfW);
+      maxY = Math.max(maxY, t.y + halfH);
     }
     return { minX, minY, maxX, maxY };
   }
@@ -423,7 +455,7 @@
   >
     {#each getTables() as table (table.id)}
       {@const isDragging = dragTableId === table.id}
-      <TableCircle
+      <TableRenderer
         {table}
         guestCount={(getGuestsByTable().get(table.id) ?? []).length}
         dndItems={dndItemsByTable.get(table.id) ?? []}
@@ -442,13 +474,28 @@
     {/each}
   </div>
 
-  <button
-    class="floor-plan-add-btn"
-    onmousedown={(e) => e.stopPropagation()}
-    onclick={addTable}
-  >
-    + Add Table
-  </button>
+  <div class="add-table-group" onmousedown={(e) => e.stopPropagation()}>
+    <button class="floor-plan-add-btn" onclick={() => addTable("round")}>
+      + Add Table
+    </button>
+    <button
+      class="floor-plan-add-btn add-table-toggle"
+      onclick={() => (showAddMenu = !showAddMenu)}
+    >
+      &#9662;
+    </button>
+    {#if showAddMenu}
+      <div class="add-table-menu">
+        <button onclick={() => handleAddFromMenu("round")}>Round Table</button>
+        <button onclick={() => handleAddFromMenu("rectangle")}
+          >Rectangle Table</button
+        >
+        <button onclick={() => handleAddFromMenu("sweetheart")}
+          >Sweetheart Table</button
+        >
+      </div>
+    {/if}
+  </div>
 
   <div class="floor-plan-controls" onmousedown={(e) => e.stopPropagation()}>
     <button onclick={fitToView}>Fit to View</button>
@@ -511,21 +558,61 @@
     background-size: 50px 50px;
   }
 
-  .floor-plan-add-btn {
+  .add-table-group {
     position: absolute;
     top: 12px;
     right: 12px;
     z-index: 20;
+    display: flex;
+  }
+
+  .floor-plan-add-btn {
     font-size: 13px;
     padding: 6px 14px;
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 6px 0 0 6px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   }
 
   .floor-plan-add-btn:hover {
     border-color: var(--accent-border);
+    color: var(--accent);
+  }
+
+  .add-table-toggle {
+    padding: 6px 8px;
+    border-radius: 0 6px 6px 0;
+    border-left: none;
+  }
+
+  .add-table-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    min-width: 160px;
+  }
+
+  .add-table-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 13px;
+    background: none;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .add-table-menu button:hover {
+    background: var(--accent-bg);
     color: var(--accent);
   }
 

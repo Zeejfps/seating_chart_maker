@@ -4,10 +4,14 @@ export interface Guest {
   tableId: string | null;
 }
 
+export type TableShape = "round" | "rectangle" | "sweetheart";
+
 export interface Table {
   id: string;
   name: string;
+  shape: TableShape;
   capacity: number;
+  rotation: number;
   x: number;
   y: number;
 }
