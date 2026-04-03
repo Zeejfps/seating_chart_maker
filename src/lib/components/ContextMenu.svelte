@@ -31,6 +31,7 @@
   let { menu, onclose, onshowmodal }: Props = $props();
 
   let menuEl: HTMLDivElement | undefined = $state();
+  let triggerTableEdit: (() => void) | undefined = $state();
 
   // Clamped position to keep menu in viewport
   let clampedX = $state(0);
@@ -181,10 +182,12 @@
   >
     {#if menu.context.type === "table" && table}
       <div class="menu-header">
-        <span class="menu-header-name">
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <span class="menu-header-name" ondblclick={() => triggerTableEdit?.()}>
           <InlineEdit
             value={table.name}
             oncommit={(newName) => handleRenameTable(table, newName)}
+            bind:triggerEdit={triggerTableEdit}
           />
         </span>
         <button

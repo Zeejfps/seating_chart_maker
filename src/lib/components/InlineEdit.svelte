@@ -3,9 +3,19 @@
     value: string;
     oncommit: (newValue: string) => void;
     onediting?: (editing: boolean) => void;
+    triggerEdit?: () => void;
   }
 
-  let { value, oncommit, onediting }: Props = $props();
+  let {
+    value,
+    oncommit,
+    onediting,
+    triggerEdit = $bindable(),
+  }: Props = $props();
+
+  $effect(() => {
+    triggerEdit = startEdit;
+  });
 
   let editing = $state(false);
   let editValue = $state("");
