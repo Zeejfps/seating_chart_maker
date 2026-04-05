@@ -45,6 +45,17 @@
   let width = $derived(getRectWidth(table.capacity));
   let topSeats = $derived(Math.ceil(table.capacity / 2));
   let bottomSeats = $derived(Math.floor(table.capacity / 2));
+
+  let nameEl: HTMLSpanElement | undefined = $state();
+  let nameScale = $state(1);
+
+  $effect(() => {
+    table.name;
+    if (!nameEl) return;
+    const natural = nameEl.scrollWidth;
+    const available = width - 8;
+    nameScale = natural > available ? available / natural : 1;
+  });
 </script>
 
 <div
@@ -69,7 +80,11 @@
   }}
 >
   <div class="table-info" style="transform: rotate(-{table.rotation}deg);">
-    <span class="table-rect-name">{table.name}</span>
+    <span
+      class="table-rect-name"
+      bind:this={nameEl}
+      style="transform: scale({nameScale});">{table.name}</span
+    >
     <CapacityBadge count={guestCount} capacity={table.capacity} size="small" />
   </div>
 
@@ -215,6 +230,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    white-space: nowrap;
     z-index: 1;
   }
 

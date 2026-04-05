@@ -41,6 +41,17 @@
     ondndconsider,
     ondndfinalize,
   }: Props = $props();
+
+  let nameEl: HTMLSpanElement | undefined = $state();
+  let nameScale = $state(1);
+
+  $effect(() => {
+    table.name;
+    if (!nameEl) return;
+    const natural = nameEl.scrollWidth;
+    const available = SWEETHEART_WIDTH - 8;
+    nameScale = natural > available ? available / natural : 1;
+  });
 </script>
 
 <div
@@ -65,7 +76,11 @@
   }}
 >
   <div class="table-info" style="transform: rotate(-{table.rotation}deg);">
-    <span class="table-sweetheart-name">{table.name}</span>
+    <span
+      class="table-sweetheart-name"
+      bind:this={nameEl}
+      style="transform: scale({nameScale});">{table.name}</span
+    >
     <CapacityBadge count={guestCount} capacity={table.capacity} size="small" />
   </div>
 
@@ -192,6 +207,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    white-space: nowrap;
     z-index: 1;
   }
 
