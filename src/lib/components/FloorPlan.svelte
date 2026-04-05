@@ -379,6 +379,17 @@
 
   function handleDndConsider(tableId: string, e: CustomEvent) {
     const trigger = e.detail.info.trigger;
+    const tableName = getTables().find((t) => t.id === tableId)?.name;
+    const itemIds = e.detail.items.map(
+      (g: Guest & { isDndShadowItem?: boolean }) =>
+        `${g.name ?? "?"}(${g.isDndShadowItem ? "shadow:" : ""}${g.id.slice(0, 8)})`,
+    );
+    console.log(
+      `[DnD consider] table=${tableName} trigger=${trigger} items=[${itemIds.join(", ")}]`,
+    );
+    const prevItems = dndItemsByTable.get(tableId) ?? [];
+    const prevIds = prevItems.map((g) => `${g.name}(${g.id.slice(0, 8)})`);
+    console.log(`[DnD consider] prev items=[${prevIds.join(", ")}]`);
     if (trigger === TRIGGERS.DRAGGED_ENTERED) {
       dndDraggingTable = tableId;
     } else if (
@@ -388,12 +399,31 @@
       if (dndDraggingTable === tableId) dndDraggingTable = null;
     }
     setDndActive(true);
+    // Deduplicate: when dragging a guest from a table's context menu back onto
+    // the same table, svelte-dnd-action adds a shadow element but doesn't remove
+    // the real guest (it only filters by placeholder ID). Remove the real item
+    // if a shadow for the same guest exists.
+    const draggedId = e.detail.info.id;
+    let items: Guest[] = e.detail.items;
+    const hasShadow = items.some(
+      (i: Guest & { isDndShadowItem?: boolean }) => i.isDndShadowItem,
+    );
+    if (hasShadow && draggedId) {
+      items = items.filter(
+        (i: Guest & { isDndShadowItem?: boolean }) =>
+          i.id !== draggedId || i.isDndShadowItem,
+      );
+    }
     const newMap = new Map(dndItemsByTable);
-    newMap.set(tableId, e.detail.items);
+    newMap.set(tableId, items);
     dndItemsByTable = newMap;
   }
 
   function handleDndFinalize(tableId: string, e: CustomEvent) {
+    const tableName = getTables().find((t) => t.id === tableId)?.name;
+    console.log(
+      `[DnD finalize] table=${tableName} items=${e.detail.items.length}`,
+    );
     dndDraggingTable = null;
     setDndActive(false);
     const newItems: Guest[] = e.detail.items;

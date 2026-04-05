@@ -80,16 +80,19 @@
 
   // Close on outside click, escape, scroll
   function handleWindowClick(e: MouseEvent) {
+    if (draggingGuest) return;
     if (menuEl && !menuEl.contains(e.target as Node)) {
       onclose();
     }
   }
 
   function handleKeydown(e: KeyboardEvent) {
+    if (draggingGuest) return;
     if (e.key === "Escape") onclose();
   }
 
   function handleScroll() {
+    if (draggingGuest) return;
     onclose();
   }
 
@@ -127,12 +130,18 @@
   });
 
   function handleGuestDndConsider(e: CustomEvent) {
+    console.log(
+      `[CtxMenu DnD consider] trigger=${e.detail.info.trigger} items=${e.detail.items.length}`,
+    );
     draggingGuest = true;
     setDndActive(true);
     localGuests = e.detail.items;
   }
 
   function handleGuestDndFinalize(e: CustomEvent) {
+    console.log(
+      `[CtxMenu DnD finalize] items=${e.detail.items.length} (was ${guests.length})`,
+    );
     draggingGuest = false;
     setDndActive(false);
     const newItems: Guest[] = e.detail.items;
