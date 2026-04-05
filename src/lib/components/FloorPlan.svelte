@@ -457,7 +457,7 @@
       {@const isDragging = dragTableId === table.id}
       <TableRenderer
         {table}
-        guestCount={(getGuestsByTable().get(table.id) ?? []).length}
+        guestCount={(dndItemsByTable.get(table.id) ?? []).length}
         dndItems={dndItemsByTable.get(table.id) ?? []}
         isSelected={selectedTableId === table.id}
         {isDragging}
