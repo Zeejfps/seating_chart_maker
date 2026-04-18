@@ -15,30 +15,27 @@
   );
 </script>
 
-<div class="stats-bar">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="floating-bar stats-bar" onmousedown={(e) => e.stopPropagation()}>
   <span><strong>{totalGuests}</strong> guests</span>
+  <span class="sep"></span>
   <span><strong>{assignedCount}</strong> assigned</span>
+  <span class="sep"></span>
   <span><strong>{unassignedCount}</strong> unassigned</span>
+  <span class="sep"></span>
   <span><strong>{tableCount}</strong> tables</span>
-  <span><strong>{tablesWithOpenSeats}</strong> with open seats</span>
+  <span class="sep"></span>
+  <span><strong>{tablesWithOpenSeats}</strong> open</span>
 </div>
 
 <style>
   .stats-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    z-index: 100;
-    display: flex;
-    gap: 20px;
-    padding: 8px 16px;
-    border-top: 1px solid var(--border);
-    background: var(--bg);
-    font-size: 13px;
+    bottom: 12px;
+    left: 12px;
+    padding: 6px 12px;
+    gap: 8px;
+    font-size: 12px;
     color: var(--text);
-    flex-wrap: wrap;
-    box-sizing: border-box;
   }
 
   .stats-bar span {
@@ -47,5 +44,13 @@
 
   .stats-bar :global(strong) {
     color: var(--text-h);
+    font-weight: 600;
+  }
+
+  .sep {
+    width: 1px;
+    align-self: stretch;
+    background: var(--border);
+    margin: 2px 0;
   }
 </style>

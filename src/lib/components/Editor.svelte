@@ -15,9 +15,13 @@
   } from "../commands";
   import { detectMergeChanges } from "../csv";
   import type { ModalState } from "../types";
-  import Toolbar from "./Toolbar.svelte";
+  import TitleBar from "./TitleBar.svelte";
+  import SearchBar from "./SearchBar.svelte";
+  import ActionsBar from "./ActionsBar.svelte";
   import StatsBar from "./StatsBar.svelte";
-  import Sidebar from "./Sidebar.svelte";
+  import UnassignedPanel from "./UnassignedPanel.svelte";
+  import AddTableBar from "./AddTableBar.svelte";
+  import ViewControlsBar from "./ViewControlsBar.svelte";
   import FloorPlan from "./FloorPlan.svelte";
   import Modal from "./Modal.svelte";
   import ErrorModal from "./ErrorModal.svelte";
@@ -203,28 +207,28 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="editor-root">
-  <Toolbar
+<main class="canvas-root">
+  <FloorPlan
+    {selectedTableId}
+    {searchQuery}
+    onselecttable={(id) => (selectedTableId = id)}
+    onshowmodal={showModal}
+    onhoverchange={(id) => (hoveredTableId = id)}
+    oncursorchange={(pos) => (canvasCursor = pos)}
+    oncursoroverchange={(over) => (isCursorOverCanvas = over)}
+  />
+  <TitleBar onback={handleBack} />
+  <SearchBar
     {searchQuery}
     bind:searchInputEl
     onsearch={(q) => (searchQuery = q)}
-    onshowmodal={showModal}
-    onback={handleBack}
   />
+  <ActionsBar />
+  <UnassignedPanel {searchQuery} onshowmodal={showModal} />
+  <AddTableBar />
   <StatsBar />
-  <Sidebar {searchQuery} onshowmodal={showModal} />
-  <div class="main-area">
-    <FloorPlan
-      {selectedTableId}
-      {searchQuery}
-      onselecttable={(id) => (selectedTableId = id)}
-      onshowmodal={showModal}
-      onhoverchange={(id) => (hoveredTableId = id)}
-      oncursorchange={(pos) => (canvasCursor = pos)}
-      oncursoroverchange={(over) => (isCursorOverCanvas = over)}
-    />
-  </div>
-</div>
+  <ViewControlsBar />
+</main>
 
 {#if modal?.type === "csv-import"}
   <Modal title="Import Guest List" onclose={closeModal}>
@@ -286,31 +290,10 @@
 {/if}
 
 <style>
-  .editor-root {
-    display: grid;
-    grid-template-rows: auto 1fr;
-    grid-template-columns: var(--sidebar-width) 1fr;
-    grid-template-areas:
-      "toolbar toolbar"
-      "sidebar main";
+  .canvas-root {
+    position: relative;
+    width: 100vw;
     height: 100svh;
-    padding-bottom: 36px;
-  }
-
-  @media (max-width: 768px) {
-    .editor-root {
-      grid-template-columns: 1fr;
-      grid-template-areas:
-        "toolbar"
-        "sidebar"
-        "main";
-    }
-  }
-
-  .main-area {
-    grid-area: main;
-    display: flex;
-    flex-direction: column;
     overflow: hidden;
   }
 </style>

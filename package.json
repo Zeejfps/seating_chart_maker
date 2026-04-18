@@ -38,6 +38,7 @@
     "*.{js,ts,svelte,css,html,json,yml,md}": "prettier --write"
   },
   "dependencies": {
+    "lucide-svelte": "^1.0.1",
     "svelte-dnd-action": "^0.9.69"
   }
 }

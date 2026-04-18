@@ -21,7 +21,7 @@
     font-size: 14px;
     color: var(--text);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-    z-index: 200;
+    z-index: var(--z-toast);
     pointer-events: none;
     animation: toast-in 120ms ease-out;
   }

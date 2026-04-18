@@ -1,4 +1,4 @@
-import type { TableShape } from "./types";
+import type { Table, TableShape } from "./types";
 
 export const SHAPE_DEFAULTS = {
   round: { capacity: 8, minCapacity: 2, maxCapacity: 12 },
@@ -6,6 +6,20 @@ export const SHAPE_DEFAULTS = {
   sweetheart: { capacity: 2, minCapacity: 2, maxCapacity: 2 },
   row: { capacity: 8, minCapacity: 1, maxCapacity: 20 },
 } as const;
+
+export const TABLE_SHAPES: TableShape[] = [
+  "round",
+  "rectangle",
+  "sweetheart",
+  "row",
+];
+
+export const TABLE_SHAPE_LABELS: Record<TableShape, string> = {
+  round: "Round Table",
+  rectangle: "Rectangle Table",
+  sweetheart: "Sweetheart Table",
+  row: "Ceremony Row",
+};
 
 export const RECT_SEAT_SPACING = 30;
 export const RECT_HEIGHT = 50;
@@ -40,4 +54,24 @@ export function canChangeCapacity(shape: TableShape): boolean {
 export function clampCapacity(shape: TableShape, desired: number): number {
   const { minCapacity, maxCapacity } = SHAPE_DEFAULTS[shape];
   return Math.max(minCapacity, Math.min(maxCapacity, desired));
+}
+
+export function getTableHalfSize(t: Table): {
+  halfW: number;
+  halfH: number;
+} {
+  let halfW: number, halfH: number;
+  if (t.shape === "rectangle") {
+    halfW = getRectWidth(t.capacity) / 2 + 20;
+    halfH = RECT_HEIGHT / 2 + 20;
+  } else if (t.shape === "sweetheart") {
+    halfW = SWEETHEART_WIDTH / 2 + 20;
+    halfH = SWEETHEART_HEIGHT / 2 + 20;
+  } else {
+    return { halfW: 70, halfH: 70 };
+  }
+  if (t.rotation === 90 || t.rotation === 270) {
+    return { halfW: halfH, halfH: halfW };
+  }
+  return { halfW, halfH };
 }

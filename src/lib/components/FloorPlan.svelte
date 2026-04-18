@@ -11,14 +11,19 @@
   import { CANVAS_W, CANVAS_H, snapToGrid } from "../grid";
   import { assignGuestIfChanged } from "../dnd-utils";
   import { TRIGGERS } from "svelte-dnd-action";
-  import { addTable } from "../table-factory";
-  import type { Guest, Table, TableShape, ModalState } from "../types";
+  import type { Guest, ModalState } from "../types";
+  import { getTableHalfSize } from "../table-shapes";
   import {
-    getRectWidth,
-    RECT_HEIGHT,
-    SWEETHEART_WIDTH,
-    SWEETHEART_HEIGHT,
-  } from "../table-shapes";
+    getZoom,
+    setZoom,
+    getPanX,
+    setPanX,
+    getPanY,
+    setPanY,
+    setViewportEl,
+    clampZoom,
+    centerView,
+  } from "../ui-state.svelte";
   import TableRenderer from "./TableRenderer.svelte";
   import ContextMenu, { type ContextMenuState } from "./ContextMenu.svelte";
 
@@ -43,9 +48,6 @@
   }: Props = $props();
 
   let viewportEl: HTMLDivElement | undefined = $state();
-  let zoom = $state(1);
-  let panX = $state(0);
-  let panY = $state(0);
 
   // Pan state
   let isPanning = $state(false);
@@ -67,16 +69,12 @@
   // Context menu state
   let contextMenu: ContextMenuState | null = $state(null);
 
-  // Add table dropdown
-  let showAddMenu = $state(false);
-
   // Hover / cursor tracking for copy-paste
   let cursorCanvas: { x: number; y: number } | null = $state(null);
   let isCursorOverViewport = $state(false);
 
   function hitTestTable(pos: { x: number; y: number }): string | null {
     const tables = getTables();
-    // Iterate in reverse so topmost (last-rendered) table wins overlap ties
     for (let i = tables.length - 1; i >= 0; i--) {
       const t = tables[i];
       const { halfW, halfH } = getTableHalfSize(t);
@@ -106,11 +104,6 @@
     oncursoroverchange?.(isCursorOverViewport);
   });
 
-  function handleAddFromMenu(shape: TableShape) {
-    addTable(shape);
-    showAddMenu = false;
-  }
-
   // Search highlighting
   let highlightedTableIds: Set<string> = $derived.by(() => {
     if (!searchQuery) return new Set<string>();
@@ -122,7 +115,6 @@
         ids.add(tableId);
       }
     }
-    // Also match table names
     for (const t of getTables()) {
       if (t.name.toLowerCase().includes(q)) {
         ids.add(t.id);
@@ -132,51 +124,6 @@
   });
   let isSearching = $derived(searchQuery.length > 0);
 
-  const MIN_ZOOM = 0.75;
-  const MAX_ZOOM = 2.5;
-
-  function clampZoom(value: number): number {
-    return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
-  }
-
-  function getTableHalfSize(t: Table): { halfW: number; halfH: number } {
-    let halfW: number, halfH: number;
-    if (t.shape === "rectangle") {
-      halfW = getRectWidth(t.capacity) / 2 + 20;
-      halfH = RECT_HEIGHT / 2 + 20;
-    } else if (t.shape === "sweetheart") {
-      halfW = SWEETHEART_WIDTH / 2 + 20;
-      halfH = SWEETHEART_HEIGHT / 2 + 20;
-    } else {
-      return { halfW: 70, halfH: 70 };
-    }
-    // Swap for 90/270 degree rotations
-    if (t.rotation === 90 || t.rotation === 270) {
-      return { halfW: halfH, halfH: halfW };
-    }
-    return { halfW, halfH };
-  }
-
-  function calculateTableBounds(tables: Table[]): {
-    minX: number;
-    minY: number;
-    maxX: number;
-    maxY: number;
-  } {
-    let minX = Infinity,
-      minY = Infinity,
-      maxX = -Infinity,
-      maxY = -Infinity;
-    for (const t of tables) {
-      const { halfW, halfH } = getTableHalfSize(t);
-      minX = Math.min(minX, t.x - halfW);
-      minY = Math.min(minY, t.y - halfH);
-      maxX = Math.max(maxX, t.x + halfW);
-      maxY = Math.max(maxY, t.y + halfH);
-    }
-    return { minX, minY, maxX, maxY };
-  }
-
   function viewportToCanvas(
     clientX: number,
     clientY: number,
@@ -184,8 +131,8 @@
     if (!viewportEl) return { x: 0, y: 0 };
     const rect = viewportEl.getBoundingClientRect();
     return {
-      x: (clientX - rect.left - panX) / zoom,
-      y: (clientY - rect.top - panY) / zoom,
+      x: (clientX - rect.left - getPanX()) / getZoom(),
+      y: (clientY - rect.top - getPanY()) / getZoom(),
     };
   }
 
@@ -193,12 +140,11 @@
   function handleViewportMouseDown(e: MouseEvent) {
     if (e.button !== 0) return;
     contextMenu = null;
-    // Only pan if clicking empty space (not a table circle)
     isPanning = true;
     panStartMouseX = e.clientX;
     panStartMouseY = e.clientY;
-    panStartX = panX;
-    panStartY = panY;
+    panStartX = getPanX();
+    panStartY = getPanY();
   }
 
   function handleWindowMouseMove(e: MouseEvent) {
@@ -213,8 +159,8 @@
       cursorCanvas = inside ? viewportToCanvas(e.clientX, e.clientY) : null;
     }
     if (isPanning) {
-      panX = panStartX + (e.clientX - panStartMouseX);
-      panY = panStartY + (e.clientY - panStartMouseY);
+      setPanX(panStartX + (e.clientX - panStartMouseX));
+      setPanY(panStartY + (e.clientY - panStartMouseY));
       return;
     }
     if (dragTableId) {
@@ -225,7 +171,7 @@
   }
 
   function finalizePan() {
-    const didPan = panX !== panStartX || panY !== panStartY;
+    const didPan = getPanX() !== panStartX || getPanY() !== panStartY;
     isPanning = false;
     if (!didPan) onselecttable(null);
   }
@@ -275,7 +221,6 @@
   // --- Table click (select + context menu) ---
   function handleTableClick(e: MouseEvent, tableId: string) {
     e.stopPropagation();
-    // If we just finished a drag, don't trigger click
     if (didDragMove) {
       didDragMove = false;
       return;
@@ -315,64 +260,26 @@
     onselecttable(tableId);
   }
 
-  // Zoom editing state
-  let editingZoom = $state(false);
-  let zoomInputValue = $state("");
-
   function handleZoomWheel(e: WheelEvent) {
     const rect = viewportEl!.getBoundingClientRect();
     const pointerX = e.clientX - rect.left;
     const pointerY = e.clientY - rect.top;
 
-    const oldZoom = zoom;
+    const oldZoom = getZoom();
     const zoomSensitivity = 0.005;
     const newZoom = clampZoom(oldZoom * (1 - e.deltaY * zoomSensitivity));
 
-    panX = pointerX - (pointerX - panX) * (newZoom / oldZoom);
-    panY = pointerY - (pointerY - panY) * (newZoom / oldZoom);
-    zoom = newZoom;
-  }
-
-  function zoomToCenter(newZoomValue: number) {
-    if (!viewportEl) return;
-    const rect = viewportEl.getBoundingClientRect();
-    const cx = rect.width / 2;
-    const cy = rect.height / 2;
-    const oldZoom = zoom;
-    const clamped = clampZoom(newZoomValue);
-    panX = cx - (cx - panX) * (clamped / oldZoom);
-    panY = cy - (cy - panY) * (clamped / oldZoom);
-    zoom = clamped;
-  }
-
-  function handleZoomInput(e: Event) {
-    const input = e.target as HTMLInputElement;
-    const parsed = parseFloat(input.value);
-    if (!isNaN(parsed)) {
-      zoomToCenter(parsed / 100);
-    }
-    editingZoom = false;
-  }
-
-  function handleZoomInputKeydown(e: KeyboardEvent) {
-    if (e.key === "Enter") {
-      (e.target as HTMLInputElement).blur();
-    } else if (e.key === "Escape") {
-      editingZoom = false;
-    }
-  }
-
-  function autoFocusSelect(node: HTMLInputElement) {
-    node.focus();
-    node.select();
+    setPanX(pointerX - (pointerX - getPanX()) * (newZoom / oldZoom));
+    setPanY(pointerY - (pointerY - getPanY()) * (newZoom / oldZoom));
+    setZoom(newZoom);
   }
 
   function handleScrollPan(e: WheelEvent) {
     if (e.shiftKey) {
-      panX -= e.deltaY;
+      setPanX(getPanX() - e.deltaY);
     } else {
-      panX -= e.deltaX;
-      panY -= e.deltaY;
+      setPanX(getPanX() - e.deltaX);
+      setPanY(getPanY() - e.deltaY);
     }
   }
 
@@ -387,35 +294,7 @@
     }
   }
 
-  function fitToView() {
-    if (!viewportEl) return;
-    const tables = getTables();
-    if (tables.length === 0) {
-      zoom = 1;
-      panX = 0;
-      panY = 0;
-      return;
-    }
-
-    const padding = 80;
-    const { minX, minY, maxX, maxY } = calculateTableBounds(tables);
-    const rect = viewportEl.getBoundingClientRect();
-
-    const contentW = maxX - minX + padding * 2;
-    const contentH = maxY - minY + padding * 2;
-    const newZoom = clampZoom(
-      Math.min(rect.width / contentW, rect.height / contentH),
-    );
-
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
-    zoom = newZoom;
-    panX = rect.width / 2 - centerX * newZoom;
-    panY = rect.height / 2 - centerY * newZoom;
-  }
-
   // --- DND for guest drops ---
-  // Each circle manages a local items array for svelte-dnd-action
   let dndItemsByTable: Map<string, Guest[]> = $state(new Map());
   let dndDraggingTable: string | null = $state(null);
 
@@ -455,10 +334,6 @@
       if (dndDraggingTable === tableId) dndDraggingTable = null;
     }
     setDndActive(true);
-    // Deduplicate: when dragging a guest from a table's context menu back onto
-    // the same table, svelte-dnd-action adds a shadow element but doesn't remove
-    // the real guest (it only filters by placeholder ID). Remove the real item
-    // if a shadow for the same guest exists.
     const draggedId = e.detail.info.id;
     let items: Guest[] = e.detail.items;
     const hasShadow = items.some(
@@ -491,31 +366,20 @@
     dndItemsByTable = newMap;
   }
 
-  function centerView() {
-    if (!viewportEl) return;
-    const rect = viewportEl.getBoundingClientRect();
-    if (getTables().length > 0) {
-      fitToView();
-    } else {
-      panX = rect.width / 2 - (CANVAS_W / 2) * zoom;
-      panY = rect.height / 2 - (CANVAS_H / 2) * zoom;
-    }
-  }
-
-  // Window event listeners + initial centering
   let hasCentered = false;
   onMount(() => {
     window.addEventListener("mousemove", handleWindowMouseMove);
     window.addEventListener("mouseup", handleWindowMouseUp);
+    setViewportEl(viewportEl);
     centerView();
     if (getTables().length > 0) hasCentered = true;
     return () => {
       window.removeEventListener("mousemove", handleWindowMouseMove);
       window.removeEventListener("mouseup", handleWindowMouseUp);
+      setViewportEl(undefined);
     };
   });
 
-  // Re-center once tables load (if data wasn't ready on mount)
   $effect(() => {
     const tables = getTables();
     if (tables.length > 0 && !hasCentered) {
@@ -537,7 +401,7 @@
 >
   <div
     class="floor-plan-canvas"
-    style="width:{CANVAS_W}px; height:{CANVAS_H}px; transform: translate({panX}px, {panY}px) scale({zoom});"
+    style="width:{CANVAS_W}px; height:{CANVAS_H}px; transform: translate({getPanX()}px, {getPanY()}px) scale({getZoom()});"
   >
     {#each getTables() as table (table.id)}
       {@const isDragging = dragTableId === table.id}
@@ -560,55 +424,6 @@
     {/each}
   </div>
 
-  <div class="add-table-group" onmousedown={(e) => e.stopPropagation()}>
-    <button class="floor-plan-add-btn" onclick={() => addTable("round")}>
-      + Add Table
-    </button>
-    <button
-      class="floor-plan-add-btn add-table-toggle"
-      onclick={() => (showAddMenu = !showAddMenu)}
-    >
-      &#9662;
-    </button>
-    {#if showAddMenu}
-      <div class="add-table-menu">
-        <button onclick={() => handleAddFromMenu("round")}>Round Table</button>
-        <button onclick={() => handleAddFromMenu("rectangle")}
-          >Rectangle Table</button
-        >
-        <button onclick={() => handleAddFromMenu("sweetheart")}
-          >Sweetheart Table</button
-        >
-        <button onclick={() => handleAddFromMenu("row")}>Ceremony Row</button>
-      </div>
-    {/if}
-  </div>
-
-  <div class="floor-plan-controls" onmousedown={(e) => e.stopPropagation()}>
-    <button onclick={fitToView}>Fit to View</button>
-    <button class="zoom-btn" onclick={() => zoomToCenter(zoom - 0.1)}>−</button>
-    {#if editingZoom}
-      <input
-        class="zoom-input"
-        type="text"
-        bind:value={zoomInputValue}
-        onblur={handleZoomInput}
-        onkeydown={handleZoomInputKeydown}
-        use:autoFocusSelect
-      />
-    {:else}
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <span
-        class="zoom-display"
-        ondblclick={() => {
-          zoomInputValue = String(Math.round(zoom * 100));
-          editingZoom = true;
-        }}>{Math.round(zoom * 100)}%</span
-      >
-    {/if}
-    <button class="zoom-btn" onclick={() => zoomToCenter(zoom + 0.1)}>+</button>
-  </div>
-
   <ContextMenu
     menu={contextMenu}
     onclose={() => (contextMenu = null)}
@@ -618,7 +433,8 @@
 
 <style>
   .floor-plan-viewport {
-    flex: 1;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
     position: relative;
     cursor: grab;
@@ -643,114 +459,5 @@
       transparent 1px
     );
     background-size: 50px 50px;
-  }
-
-  .add-table-group {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 20;
-    display: flex;
-  }
-
-  .floor-plan-add-btn {
-    font-size: 13px;
-    padding: 6px 14px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px 0 0 6px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  }
-
-  .floor-plan-add-btn:hover {
-    border-color: var(--accent-border);
-    color: var(--accent);
-  }
-
-  .add-table-toggle {
-    padding: 6px 8px;
-    border-radius: 0 6px 6px 0;
-    border-left: none;
-  }
-
-  .add-table-menu {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    margin-top: 4px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    overflow: hidden;
-    min-width: 160px;
-  }
-
-  .add-table-menu button {
-    display: block;
-    width: 100%;
-    text-align: left;
-    padding: 8px 12px;
-    font-size: 13px;
-    background: none;
-    border: none;
-    color: var(--text);
-    cursor: pointer;
-  }
-
-  .add-table-menu button:hover {
-    background: var(--accent-bg);
-    color: var(--accent);
-  }
-
-  .floor-plan-controls {
-    position: absolute;
-    bottom: 12px;
-    right: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    z-index: 20;
-  }
-
-  .floor-plan-controls button {
-    font-size: 12px;
-    padding: 4px 10px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  }
-
-  .zoom-btn {
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    line-height: 1;
-  }
-
-  .zoom-display {
-    font-size: 12px;
-    color: var(--text);
-    min-width: 40px;
-    text-align: center;
-    cursor: default;
-    user-select: none;
-  }
-
-  .zoom-input {
-    width: 50px;
-    font-size: 12px;
-    text-align: center;
-    padding: 2px 4px;
-    border: 1px solid var(--accent-border);
-    border-radius: 4px;
-    background: var(--bg);
-    color: var(--text);
-    outline: none;
   }
 </style>

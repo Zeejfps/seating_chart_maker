@@ -4,7 +4,7 @@
   import { executeCommand } from "../command-history.svelte";
   import { RenameGuestCommand, RemoveGuestCommand } from "../commands";
   import InlineEdit from "./InlineEdit.svelte";
-  import TrashIcon from "./icons/TrashIcon.svelte";
+  import { Trash2 } from "lucide-svelte";
 
   interface Props {
     guest: Guest;
@@ -63,7 +63,7 @@
       {#if icon}
         {@render icon()}
       {:else}
-        <TrashIcon />
+        <Trash2 size={14} />
       {/if}
     </button>
   {/if}

@@ -15,10 +15,12 @@
     canChangeCapacity,
     clampCapacity,
     SHAPE_DEFAULTS,
+    TABLE_SHAPES,
+    TABLE_SHAPE_LABELS,
   } from "../table-shapes";
   import { dndzone } from "svelte-dnd-action";
   import InlineEdit from "./InlineEdit.svelte";
-  import TrashIcon from "./icons/TrashIcon.svelte";
+  import { Trash2, X } from "lucide-svelte";
   import type { Guest, Table, TableShape, ModalState } from "../types";
 
   export type ContextMenuState =
@@ -229,7 +231,7 @@
           title="Delete table"
           onclick={handleDeleteTable}
         >
-          <TrashIcon />
+          <Trash2 size={14} />
         </button>
       </div>
 
@@ -270,24 +272,14 @@
                   title="Unassign"
                   onclick={() => handleUnassignGuest(guest)}
                 >
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    ><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg
-                  >
+                  <X size={12} />
                 </button>
                 <button
                   class="guest-action-btn delete"
                   title="Delete"
                   onclick={() => handleDeleteGuest(guest)}
                 >
-                  <TrashIcon size={12} />
+                  <Trash2 size={12} />
                 </button>
               </div>
             </div>
@@ -326,18 +318,11 @@
         </div>
       {/if}
     {:else if menu.context.type === "canvas"}
-      <button class="menu-item" onclick={() => handleAddTableHere("round")}
-        >Add Round Table</button
-      >
-      <button class="menu-item" onclick={() => handleAddTableHere("rectangle")}
-        >Add Rectangle Table</button
-      >
-      <button class="menu-item" onclick={() => handleAddTableHere("sweetheart")}
-        >Add Sweetheart Table</button
-      >
-      <button class="menu-item" onclick={() => handleAddTableHere("row")}
-        >Add Ceremony Row</button
-      >
+      {#each TABLE_SHAPES as shape}
+        <button class="menu-item" onclick={() => handleAddTableHere(shape)}>
+          Add {TABLE_SHAPE_LABELS[shape]}
+        </button>
+      {/each}
     {/if}
   </div>
 {/if}
@@ -345,7 +330,7 @@
 <style>
   .context-menu {
     position: fixed;
-    z-index: 100;
+    z-index: var(--z-context-menu);
     min-width: 240px;
     max-width: 320px;
     background: var(--bg);
