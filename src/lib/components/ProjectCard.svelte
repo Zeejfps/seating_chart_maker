@@ -18,8 +18,10 @@
 </script>
 
 <div class="card">
-  <div class="card-header">
-    <div class="card-name">
+  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+  <div class="card-header" onclick={() => onopen(entry.id)}>
+    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+    <div class="card-name" onclick={(e) => e.stopPropagation()}>
       <InlineEdit
         value={entry.name}
         oncommit={(name) => onrename(entry.id, name)}
@@ -69,16 +71,18 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 8px;
+    cursor: pointer;
   }
 
   .card-name {
     font-size: 16px;
     font-weight: 600;
-    flex: 1;
+    flex: 0 1 auto;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    cursor: default;
   }
 
   .open-area {
