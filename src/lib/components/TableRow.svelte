@@ -7,6 +7,8 @@
     ROW_HEIGHT,
     ROW_PADDING,
     ROW_CHAIR_OFFSET,
+    ROW_HITBOX_PAD_X,
+    ROW_HITBOX_HEIGHT,
     getRowWidth,
   } from "../table-shapes";
 
@@ -44,7 +46,13 @@
     ondndfinalize,
   }: Props = $props();
 
-  let width = $derived(getRowWidth(table.capacity));
+  let barWidth = $derived(getRowWidth(table.capacity));
+  let wrapperWidth = $derived(barWidth + 2 * ROW_HITBOX_PAD_X);
+  // Vertical center of wrapper = bar center. Wrapper is symmetric around bar.
+  const BAR_TOP = (ROW_HITBOX_HEIGHT - ROW_HEIGHT) / 2;
+  const CHAIR_TOP = BAR_TOP + ROW_HEIGHT + ROW_CHAIR_OFFSET - 6;
+  const CHAIR_LABEL_TOP = BAR_TOP + ROW_HEIGHT + ROW_CHAIR_OFFSET + 14;
+  const INFO_TOP = BAR_TOP - 24;
 </script>
 
 <div
@@ -53,8 +61,8 @@
   class:is-dragging={isDragging}
   class:dnd-hover={isDndHover}
   class:dimmed={isDimmed}
-  style="left:{x}px; top:{y}px; width:{width}px; height:{ROW_HEIGHT}px; margin-left:{-width /
-    2}px; margin-top:{-ROW_HEIGHT /
+  style="left:{x}px; top:{y}px; width:{wrapperWidth}px; height:{ROW_HITBOX_HEIGHT}px; margin-left:{-wrapperWidth /
+    2}px; margin-top:{-ROW_HITBOX_HEIGHT /
     2}px; transform: rotate({table.rotation}deg);"
   role="button"
   tabindex="0"
@@ -69,27 +77,31 @@
   }}
 >
   <div
+    class="table-row-bar"
+    style="left:{ROW_HITBOX_PAD_X}px; top:{BAR_TOP}px; width:{barWidth}px; height:{ROW_HEIGHT}px;"
+  ></div>
+
+  <div
     class="table-info"
-    style="transform: translateX(-50%) rotate(-{table.rotation}deg);"
+    style="top:{INFO_TOP}px; transform: translateX(-50%) rotate(-{table.rotation}deg);"
   >
     <span class="table-row-name">{table.name}</span>
     <CapacityBadge count={guestCount} capacity={table.capacity} size="small" />
   </div>
 
   {#each Array(table.capacity) as _, i (i)}
-    {@const cx = ROW_PADDING / 2 + (i + 0.5) * ROW_SEAT_SPACING}
+    {@const cx =
+      ROW_HITBOX_PAD_X + ROW_PADDING / 2 + (i + 0.5) * ROW_SEAT_SPACING}
     {@const isOccupied = i < guestCount}
     <div
       class="chair"
       class:occupied={isOccupied}
-      style="left: {cx - 6}px; top: {ROW_HEIGHT + ROW_CHAIR_OFFSET - 6}px;"
+      style="left: {cx - 6}px; top: {CHAIR_TOP}px;"
     ></div>
     {#if isOccupied && dndItems[i]}
       <span
         class="chair-label"
-        style="left: {cx}px; top: {ROW_HEIGHT +
-          ROW_CHAIR_OFFSET +
-          14}px; transform: translate(-50%, -50%) rotate(-{table.rotation}deg);"
+        style="left: {cx}px; top: {CHAIR_LABEL_TOP}px; transform: translate(-50%, -50%) rotate(-{table.rotation}deg);"
       >
         {dndItems[i].name.split(" ")[0]}
       </span>
@@ -97,7 +109,7 @@
   {/each}
 
   <div
-    style="position:absolute; inset:0; border-radius:3px; overflow:hidden;"
+    style="position:absolute; inset:0; overflow:hidden;"
     use:dndzone={{
       items: dndItems,
       type: "guest",
@@ -124,16 +136,23 @@
 <style>
   .table-row {
     position: absolute;
-    border-radius: 3px;
-    background: var(--card-bg);
-    border: 2px solid var(--border);
     cursor: grab;
     user-select: none;
-    transition:
-      border-color 0.15s,
-      box-shadow 0.15s;
     z-index: 1;
     overflow: visible;
+  }
+
+  .table-row-bar {
+    position: absolute;
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: 3px;
+    box-sizing: border-box;
+    transition:
+      border-color 0.15s,
+      background 0.15s,
+      box-shadow 0.15s;
+    pointer-events: none;
   }
 
   .chair {
@@ -162,16 +181,16 @@
     line-height: 1;
   }
 
-  .table-row:hover {
+  .table-row:hover .table-row-bar {
     border-color: var(--accent);
   }
 
-  .table-row.selected {
+  .table-row.selected .table-row-bar {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-bg);
   }
 
-  .table-row.dnd-hover {
+  .table-row.dnd-hover .table-row-bar {
     border-color: var(--accent);
     background: var(--accent-bg);
   }
@@ -190,7 +209,6 @@
   .table-info {
     position: absolute;
     left: 50%;
-    top: -24px;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -198,6 +216,7 @@
     white-space: nowrap;
     z-index: 1;
     transform-origin: center;
+    pointer-events: none;
   }
 
   .table-row-name {

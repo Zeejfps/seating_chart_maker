@@ -19,6 +19,10 @@ export const ROW_SEAT_SPACING = 30;
 export const ROW_HEIGHT = 6;
 export const ROW_PADDING = 10;
 export const ROW_CHAIR_OFFSET = 14;
+const ROW_CHAIR_SIZE = 12;
+export const ROW_HITBOX_PAD_X = 6;
+export const ROW_HITBOX_HEIGHT =
+  (ROW_CHAIR_OFFSET + ROW_CHAIR_SIZE) * 2 + ROW_HEIGHT;
 
 export function getRectWidth(capacity: number): number {
   const seatsPerSide = Math.ceil(capacity / 2);
