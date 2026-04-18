@@ -335,6 +335,9 @@
       <button class="menu-item" onclick={() => handleAddTableHere("sweetheart")}
         >Add Sweetheart Table</button
       >
+      <button class="menu-item" onclick={() => handleAddTableHere("row")}
+        >Add Ceremony Row</button
+      >
     {/if}
   </div>
 {/if}

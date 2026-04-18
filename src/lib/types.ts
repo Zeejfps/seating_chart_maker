@@ -4,7 +4,7 @@ export interface Guest {
   tableId: string | null;
 }
 
-export type TableShape = "round" | "rectangle" | "sweetheart";
+export type TableShape = "round" | "rectangle" | "sweetheart" | "row";
 
 export interface Table {
   id: string;

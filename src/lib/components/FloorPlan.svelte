@@ -523,6 +523,7 @@
         <button onclick={() => handleAddFromMenu("sweetheart")}
           >Sweetheart Table</button
         >
+        <button onclick={() => handleAddFromMenu("row")}>Ceremony Row</button>
       </div>
     {/if}
   </div>

@@ -5,6 +5,37 @@ import { AddTableCommand } from "./commands";
 import { findOpenSlot, snapToGrid } from "./grid";
 import { SHAPE_DEFAULTS } from "./table-shapes";
 
+function rowNameToIndex(name: string): number | null {
+  if (!/^Row [A-Z]+$/.test(name)) return null;
+  let n = 0;
+  for (const c of name.slice(4)) n = n * 26 + (c.charCodeAt(0) - 64);
+  return n;
+}
+
+function indexToLetters(n: number): string {
+  let s = "";
+  while (n > 0) {
+    n -= 1;
+    s = String.fromCharCode(65 + (n % 26)) + s;
+    n = Math.floor(n / 26);
+  }
+  return s;
+}
+
+function getNextRowName(tables: Table[]): string {
+  let max = 0;
+  for (const t of tables) {
+    if (t.shape !== "row") continue;
+    const n = rowNameToIndex(t.name);
+    if (n !== null && n > max) max = n;
+  }
+  return `Row ${indexToLetters(max + 1)}`;
+}
+
+function nameForShape(shape: TableShape, tables: Table[]): string {
+  return shape === "row" ? getNextRowName(tables) : String(getNextTableNum());
+}
+
 /** Create and execute a command to add a new table. */
 export function addTable(shape: TableShape = "round"): void {
   executeCommand(new AddTableCommand(buildNewTable(shape)));
@@ -18,7 +49,7 @@ export function addTableAt(
 ): void {
   const table: Table = {
     id: crypto.randomUUID(),
-    name: String(getNextTableNum()),
+    name: nameForShape(shape, getTables()),
     shape,
     capacity: SHAPE_DEFAULTS[shape].capacity,
     rotation: 0,
@@ -30,11 +61,12 @@ export function addTableAt(
 
 /** Create a new table with a unique ID, next sequential name, default capacity, and the next open grid position. */
 export function buildNewTable(shape: TableShape = "round"): Table {
-  const occupied = new Set(getTables().map((t) => `${t.x},${t.y}`));
+  const tables = getTables();
+  const occupied = new Set(tables.map((t) => `${t.x},${t.y}`));
   const pos = findOpenSlot(occupied);
   return {
     id: crypto.randomUUID(),
-    name: String(getNextTableNum()),
+    name: nameForShape(shape, tables),
     shape,
     capacity: SHAPE_DEFAULTS[shape].capacity,
     rotation: 0,

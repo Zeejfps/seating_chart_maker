@@ -3,6 +3,7 @@
   import TableCircle from "./TableCircle.svelte";
   import TableRectangle from "./TableRectangle.svelte";
   import TableSweetheart from "./TableSweetheart.svelte";
+  import TableRow from "./TableRow.svelte";
 
   interface Props {
     table: Table;
@@ -58,6 +59,23 @@
   />
 {:else if table.shape === "sweetheart"}
   <TableSweetheart
+    {table}
+    {guestCount}
+    {dndItems}
+    {isSelected}
+    {isDragging}
+    {isDndHover}
+    {isDimmed}
+    {x}
+    {y}
+    {onmousedown}
+    {onclick}
+    {oncontextmenu}
+    {ondndconsider}
+    {ondndfinalize}
+  />
+{:else if table.shape === "row"}
+  <TableRow
     {table}
     {guestCount}
     {dndItems}
