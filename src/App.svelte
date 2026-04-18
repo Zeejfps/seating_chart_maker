@@ -151,6 +151,15 @@
     replaceAll(modal.state);
     closeModal();
   }
+
+  // New project: confirm clear
+  function handleNewProjectConfirm() {
+    if (modal?.type !== "new-project") return;
+    clearHistory();
+    replaceAll({ guests: [], tables: [] });
+    selectedTableId = null;
+    closeModal();
+  }
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -233,6 +242,23 @@
     {#snippet actions()}
       <button onclick={closeModal}>Cancel</button>
       <button class="danger" onclick={handleDeleteGuestConfirm}>Delete</button>
+    {/snippet}
+  </Modal>
+{/if}
+
+{#if modal?.type === "new-project"}
+  <Modal title="Start New Project" onclose={closeModal}>
+    {#snippet children()}
+      <p>
+        This will clear all guests and tables. Save your current project first
+        if you want to keep it.
+      </p>
+    {/snippet}
+    {#snippet actions()}
+      <button onclick={closeModal}>Cancel</button>
+      <button class="danger" onclick={handleNewProjectConfirm}
+        >Clear Everything</button
+      >
     {/snippet}
   </Modal>
 {/if}

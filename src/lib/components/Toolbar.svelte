@@ -27,6 +27,11 @@
     onshowmodal,
   }: Props = $props();
 
+  function handleNew() {
+    if (getGuests().length === 0 && getTables().length === 0) return;
+    onshowmodal({ type: "new-project" });
+  }
+
   function handleExport() {
     exportSnapshot(getState());
   }
@@ -105,6 +110,7 @@
   <div class="toolbar-separator"></div>
 
   <div class="toolbar-group">
+    <button onclick={handleNew}>New</button>
     <button onclick={handleExport}>Save</button>
     <button onclick={handleImport}>Load</button>
   </div>

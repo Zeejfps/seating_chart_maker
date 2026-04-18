@@ -38,4 +38,5 @@ export type ModalState =
   | { type: "delete-guest"; guest: Guest }
   | { type: "csv-import"; names: string[] }
   | { type: "snapshot-import"; state: ChartState }
+  | { type: "new-project" }
   | { type: "error"; message: string };
