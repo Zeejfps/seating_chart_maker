@@ -18,19 +18,21 @@ import { runMigrationIfNeeded } from "./migration";
 
 const DEFAULT_PROJECT_NAME = "Untitled";
 
-let _manifest: ManifestFile = $state(newManifest([]));
+let _manifest: ManifestFile = $state({ version: 2, projects: [] });
 let _currentProjectId: string | null = $state(null);
 
 const _sortedProjects = $derived(
   [..._manifest.projects].sort((a, b) => b.updatedAt - a.updatedAt),
 );
 
-function newManifest(projects: ProjectManifestEntry[]): ManifestFile {
-  return { version: 2, projects };
-}
+const _currentEntry = $derived(
+  _currentProjectId
+    ? (_manifest.projects.find((p) => p.id === _currentProjectId) ?? null)
+    : null,
+);
 
 function commitManifest(projects: ProjectManifestEntry[]): void {
-  _manifest = newManifest(projects);
+  _manifest = { version: 2, projects };
   writeManifest(_manifest);
 }
 
@@ -38,10 +40,29 @@ function existingNames(): string[] {
   return _manifest.projects.map((p) => p.name);
 }
 
+function addProject(
+  state: ChartState,
+  name: string,
+  createdAt: number = Date.now(),
+): string {
+  const id = crypto.randomUUID();
+  const entry: ProjectManifestEntry = {
+    id,
+    name: uniqueName(name, existingNames()),
+    createdAt,
+    updatedAt: Date.now(),
+    guestCount: state.guests.length,
+    tableCount: state.tables.length,
+  };
+  writeProject(id, state);
+  commitManifest([..._manifest.projects, entry]);
+  return id;
+}
+
 export function initProjects(): void {
   runMigrationIfNeeded();
   const m = readManifest();
-  _manifest = m ?? newManifest([]);
+  _manifest = m ?? { version: 2, projects: [] };
   if (!m) writeManifest(_manifest);
 
   const saved = readCurrentProjectId();
@@ -67,8 +88,7 @@ export function getCurrentProjectId(): string | null {
 }
 
 export function getCurrentEntry(): ProjectManifestEntry | null {
-  if (!_currentProjectId) return null;
-  return _manifest.projects.find((p) => p.id === _currentProjectId) ?? null;
+  return _currentEntry;
 }
 
 export function enterProject(id: string): void {
@@ -96,18 +116,7 @@ export function leaveProject(): void {
 }
 
 export function createProject(): string {
-  const id = crypto.randomUUID();
-  const now = Date.now();
-  const entry: ProjectManifestEntry = {
-    id,
-    name: uniqueName(DEFAULT_PROJECT_NAME, existingNames()),
-    createdAt: now,
-    updatedAt: now,
-    guestCount: 0,
-    tableCount: 0,
-  };
-  writeProject(id, { guests: [], tables: [] });
-  commitManifest([..._manifest.projects, entry]);
+  const id = addProject({ guests: [], tables: [] }, DEFAULT_PROJECT_NAME);
   enterProject(id);
   return id;
 }
@@ -131,19 +140,7 @@ export function duplicateProject(id: string): string | null {
     guests: sourceState.guests.map((g) => ({ ...g })),
     tables: sourceState.tables.map((t) => ({ ...t })),
   };
-  const newId = crypto.randomUUID();
-  const now = Date.now();
-  const entry: ProjectManifestEntry = {
-    id: newId,
-    name: uniqueName(`${source.name} (copy)`, existingNames()),
-    createdAt: now,
-    updatedAt: now,
-    guestCount: cloned.guests.length,
-    tableCount: cloned.tables.length,
-  };
-  writeProject(newId, cloned);
-  commitManifest([..._manifest.projects, entry]);
-  return newId;
+  return addProject(cloned, `${source.name} (copy)`);
 }
 
 export function deleteProject(id: string): void {
@@ -158,19 +155,7 @@ export function deleteProject(id: string): void {
 
 export async function importAsNewProject(file: File): Promise<string> {
   const { name, createdAt, state } = await importSnapshotFile(file);
-  const id = crypto.randomUUID();
-  const now = Date.now();
-  const entry: ProjectManifestEntry = {
-    id,
-    name: uniqueName(name, existingNames()),
-    createdAt,
-    updatedAt: now,
-    guestCount: state.guests.length,
-    tableCount: state.tables.length,
-  };
-  writeProject(id, state);
-  commitManifest([..._manifest.projects, entry]);
-  return id;
+  return addProject(state, name, createdAt);
 }
 
 export function exportProject(id: string): void {

@@ -26,10 +26,6 @@
     modal = null;
   }
 
-  function handleCreate() {
-    createProject();
-  }
-
   async function handleImport() {
     const file = await pickFile(".json,application/json");
     if (!file) return;
@@ -55,14 +51,6 @@
     }
   }
 
-  function handleDuplicate(id: string) {
-    duplicateProject(id);
-  }
-
-  function handleExport(id: string) {
-    exportProject(id);
-  }
-
   function handleRequestDelete(entry: ProjectManifestEntry) {
     showModal({
       type: "confirm-delete-project",
@@ -82,7 +70,7 @@
     <h1>Wedding Seating Chart</h1>
     <div class="header-actions">
       <button onclick={handleImport}>Import</button>
-      <button class="primary" onclick={handleCreate}>+ New Project</button>
+      <button class="primary" onclick={createProject}>+ New Project</button>
     </div>
   </header>
 
@@ -90,7 +78,7 @@
     <div class="empty-state">
       <p>No projects yet.</p>
       <div class="empty-actions">
-        <button class="primary" onclick={handleCreate}
+        <button class="primary" onclick={createProject}
           >+ Create your first project</button
         >
         <button onclick={handleImport}>Import from file</button>
@@ -103,8 +91,8 @@
           {entry}
           onopen={handleOpen}
           onrename={renameProject}
-          onduplicate={handleDuplicate}
-          onexport={handleExport}
+          onduplicate={duplicateProject}
+          onexport={exportProject}
           ondelete={handleRequestDelete}
         />
       {/each}

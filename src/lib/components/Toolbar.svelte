@@ -37,6 +37,8 @@
     onback,
   }: Props = $props();
 
+  const entry = $derived(getCurrentEntry());
+
   function handleExport() {
     const id = getCurrentProjectId();
     if (!id) return;
@@ -85,8 +87,7 @@
     ← Projects
   </button>
 
-  {#if getCurrentEntry()}
-    {@const entry = getCurrentEntry()!}
+  {#if entry}
     <h1 class="project-title" title="Double-click to rename">
       <InlineEdit
         value={entry.name}

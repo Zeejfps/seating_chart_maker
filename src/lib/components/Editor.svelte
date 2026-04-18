@@ -39,17 +39,40 @@
 
   let modal: ModalState | null = $state(null);
 
-  // Skip the initial load (the effect's first run) so opening a project
-  // doesn't bump updatedAt. Untrack the save so its manifest write can't
-  // re-trigger this effect.
+  const SAVE_DEBOUNCE_MS = 300;
   let autosaveArmed = false;
+  let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function flushSave() {
+    if (saveTimer === null) return;
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    saveCurrentProject(getState());
+  }
+
+  // Skip the initial load (the effect's first run) so opening a project
+  // doesn't bump updatedAt. Debounced + untracked so the manifest write
+  // can't re-trigger this effect.
   $effect(() => {
-    const state = getState();
+    getState();
     if (!autosaveArmed) {
       autosaveArmed = true;
       return;
     }
-    untrack(() => saveCurrentProject(state));
+    if (saveTimer !== null) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      saveTimer = null;
+      untrack(() => saveCurrentProject(getState()));
+    }, SAVE_DEBOUNCE_MS);
+  });
+
+  $effect(() => {
+    const onPagehide = () => flushSave();
+    window.addEventListener("pagehide", onPagehide);
+    return () => {
+      window.removeEventListener("pagehide", onPagehide);
+      flushSave();
+    };
   });
 
   function handleDeleteTableConfirm() {
@@ -173,6 +196,7 @@
   }
 
   function handleBack() {
+    flushSave();
     leaveProject();
   }
 </script>

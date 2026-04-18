@@ -12,9 +12,10 @@ import type {
   SnapshotV2,
 } from "./types";
 
-export const K_MANIFEST = "seating-chart-v2:manifest";
-export const K_CURRENT = "seating-chart-v2:currentProjectId";
-export const projectKey = (id: string) => `seating-chart-v2:project:${id}`;
+const NS = "seating-chart-v2:";
+export const K_MANIFEST = `${NS}manifest`;
+export const K_CURRENT = `${NS}currentProjectId`;
+export const projectKey = (id: string) => `${NS}project:${id}`;
 export const K_LEGACY = "seating-chart-v1";
 
 export function readManifest(): ManifestFile | null {
@@ -32,41 +33,23 @@ export function readManifest(): ManifestFile | null {
 export function writeManifest(m: ManifestFile): void {
   try {
     localStorage.setItem(K_MANIFEST, JSON.stringify(m));
-  } catch {
-    // quota exceeded or unavailable
-  }
+  } catch {}
 }
 
 export function readProject(id: string): ChartState | null {
-  try {
-    const raw = localStorage.getItem(projectKey(id));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!isValidChartState(parsed)) return null;
-    const sanitized = sanitizeChartState(parsed);
-    sanitized.tables = backfillTableFields(
-      backfillTablePositions(sanitized.tables),
-    );
-    return sanitized;
-  } catch {
-    return null;
-  }
+  return readChartState(projectKey(id));
 }
 
 export function writeProject(id: string, state: ChartState): void {
   try {
     localStorage.setItem(projectKey(id), JSON.stringify(state));
-  } catch {
-    // silently ignored — same behavior as v1
-  }
+  } catch {}
 }
 
 export function deleteProjectKey(id: string): void {
   try {
     localStorage.removeItem(projectKey(id));
-  } catch {
-    // ignored
-  }
+  } catch {}
 }
 
 export function readCurrentProjectId(): string | null {
@@ -82,25 +65,34 @@ export function writeCurrentProjectId(id: string | null): void {
   try {
     if (id === null) localStorage.removeItem(K_CURRENT);
     else localStorage.setItem(K_CURRENT, id);
-  } catch {
-    // ignored
-  }
+  } catch {}
 }
 
 export function readLegacyV1(): ChartState | null {
+  return readChartState(K_LEGACY);
+}
+
+function readChartState(key: string): ChartState | null {
   try {
-    const raw = localStorage.getItem(K_LEGACY);
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!isValidChartState(parsed)) return null;
-    const sanitized = sanitizeChartState(parsed);
-    sanitized.tables = backfillTableFields(
-      backfillTablePositions(sanitized.tables),
-    );
-    return sanitized;
+    return normalizeChartState(parsed);
   } catch {
     return null;
   }
+}
+
+function normalizeChartState(parsed: {
+  guests: unknown[];
+  tables: unknown[];
+}): ChartState {
+  const sanitized = sanitizeChartState(parsed);
+  sanitized.tables = backfillTableFields(
+    backfillTablePositions(sanitized.tables),
+  );
+  return sanitized;
 }
 
 export function exportSnapshotFile(
@@ -130,10 +122,6 @@ export async function importSnapshotFile(
     if (!isValidChartState(snap.state)) {
       throw new Error("Invalid snapshot file");
     }
-    const sanitized = sanitizeChartState(snap.state);
-    sanitized.tables = backfillTableFields(
-      backfillTablePositions(sanitized.tables),
-    );
     const name =
       typeof snap.project?.name === "string"
         ? snap.project.name.trim() || defaultImportName()
@@ -142,19 +130,15 @@ export async function importSnapshotFile(
       typeof snap.project?.createdAt === "number"
         ? snap.project.createdAt
         : Date.now();
-    return { name, createdAt, state: sanitized };
+    return { name, createdAt, state: normalizeChartState(snap.state) };
   }
   if (isSnapshotV1(snap)) {
     const state: ChartState = { guests: snap.guests, tables: snap.tables };
     if (!isValidChartState(state)) throw new Error("Invalid snapshot file");
-    const sanitized = sanitizeChartState(state);
-    sanitized.tables = backfillTableFields(
-      backfillTablePositions(sanitized.tables),
-    );
     return {
       name: defaultImportName(),
       createdAt: Date.now(),
-      state: sanitized,
+      state: normalizeChartState(state),
     };
   }
   throw new Error("Invalid snapshot file");
@@ -196,6 +180,7 @@ function defaultImportName(): string {
 }
 
 function backfillTablePositions(tables: Table[]): Table[] {
+  if (tables.every((t) => t.x != null && t.y != null)) return tables;
   const { startX, startY } = gridStartPosition();
   return tables.map((t, i) => ({
     ...t,
@@ -205,6 +190,7 @@ function backfillTablePositions(tables: Table[]): Table[] {
 }
 
 function backfillTableFields(tables: Table[]): Table[] {
+  if (tables.every((t) => t.shape != null && t.rotation != null)) return tables;
   return tables.map((t) => {
     const raw = t as unknown as Record<string, unknown>;
     return {
