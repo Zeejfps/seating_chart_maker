@@ -27,11 +27,19 @@
   import Sidebar from "./lib/components/Sidebar.svelte";
   import FloorPlan from "./lib/components/FloorPlan.svelte";
   import Modal from "./lib/components/Modal.svelte";
+  import Toast from "./lib/components/Toast.svelte";
+  import { getClipboard, setClipboard } from "./lib/clipboard.svelte";
+  import { showToast } from "./lib/toast.svelte";
+  import { pasteTableAt } from "./lib/table-factory";
 
   let selectedTableId: string | null = $state(null);
   let initialized = $state(false);
   let searchQuery = $state("");
   let searchInputEl: HTMLInputElement | undefined = $state();
+
+  let hoveredTableId: string | null = $state(null);
+  let canvasCursor: { x: number; y: number } | null = $state(null);
+  let isCursorOverCanvas = $state(false);
 
   // Modal state
   let modal: ModalState | null = $state(null);
@@ -85,6 +93,30 @@
     if ((e.ctrlKey || e.metaKey) && e.key === "f") {
       e.preventDefault();
       searchInputEl?.focus();
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === "c" && !e.shiftKey) {
+      if (hoveredTableId) {
+        const table = getTables().find((t) => t.id === hoveredTableId);
+        if (table) {
+          e.preventDefault();
+          setClipboard({
+            name: table.name,
+            shape: table.shape,
+            capacity: table.capacity,
+            rotation: table.rotation,
+          });
+          showToast(`Table ${table.name} copied`);
+        }
+      }
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === "v" && !e.shiftKey) {
+      const clip = getClipboard();
+      if (clip && isCursorOverCanvas && canvasCursor) {
+        e.preventDefault();
+        pasteTableAt(clip, canvasCursor.x, canvasCursor.y);
+      }
       return;
     }
     if ((e.ctrlKey || e.metaKey) && e.key === "z") {
@@ -178,6 +210,9 @@
     {searchQuery}
     onselecttable={(id) => (selectedTableId = id)}
     onshowmodal={showModal}
+    onhoverchange={(id) => (hoveredTableId = id)}
+    oncursorchange={(pos) => (canvasCursor = pos)}
+    oncursoroverchange={(over) => (isCursorOverCanvas = over)}
   />
 </div>
 
@@ -274,6 +309,8 @@
     {/snippet}
   </Modal>
 {/if}
+
+<Toast />
 
 <style>
   :global(#app) {

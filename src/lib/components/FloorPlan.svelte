@@ -27,10 +27,20 @@
     searchQuery: string;
     onselecttable: (id: string | null) => void;
     onshowmodal: (modal: ModalState) => void;
+    onhoverchange?: (id: string | null) => void;
+    oncursorchange?: (pos: { x: number; y: number } | null) => void;
+    oncursoroverchange?: (over: boolean) => void;
   }
 
-  let { selectedTableId, searchQuery, onselecttable, onshowmodal }: Props =
-    $props();
+  let {
+    selectedTableId,
+    searchQuery,
+    onselecttable,
+    onshowmodal,
+    onhoverchange,
+    oncursorchange,
+    oncursoroverchange,
+  }: Props = $props();
 
   let viewportEl: HTMLDivElement | undefined = $state();
   let zoom = $state(1);
@@ -59,6 +69,42 @@
 
   // Add table dropdown
   let showAddMenu = $state(false);
+
+  // Hover / cursor tracking for copy-paste
+  let cursorCanvas: { x: number; y: number } | null = $state(null);
+  let isCursorOverViewport = $state(false);
+
+  function hitTestTable(pos: { x: number; y: number }): string | null {
+    const tables = getTables();
+    // Iterate in reverse so topmost (last-rendered) table wins overlap ties
+    for (let i = tables.length - 1; i >= 0; i--) {
+      const t = tables[i];
+      const { halfW, halfH } = getTableHalfSize(t);
+      if (
+        pos.x >= t.x - halfW &&
+        pos.x <= t.x + halfW &&
+        pos.y >= t.y - halfH &&
+        pos.y <= t.y + halfH
+      ) {
+        return t.id;
+      }
+    }
+    return null;
+  }
+
+  let hoveredTableId = $derived(
+    isCursorOverViewport && cursorCanvas ? hitTestTable(cursorCanvas) : null,
+  );
+
+  $effect(() => {
+    onhoverchange?.(hoveredTableId);
+  });
+  $effect(() => {
+    oncursorchange?.(cursorCanvas);
+  });
+  $effect(() => {
+    oncursoroverchange?.(isCursorOverViewport);
+  });
 
   function handleAddFromMenu(shape: TableShape) {
     addTable(shape);
@@ -156,6 +202,16 @@
   }
 
   function handleWindowMouseMove(e: MouseEvent) {
+    if (viewportEl) {
+      const rect = viewportEl.getBoundingClientRect();
+      const inside =
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom;
+      isCursorOverViewport = inside;
+      cursorCanvas = inside ? viewportToCanvas(e.clientX, e.clientY) : null;
+    }
     if (isPanning) {
       panX = panStartX + (e.clientX - panStartMouseX);
       panY = panStartY + (e.clientY - panStartMouseY);
