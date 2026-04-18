@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ZoomIn, ZoomOut, Maximize2 } from "lucide-svelte";
+  import { ZoomIn, ZoomOut, Focus } from "lucide-svelte";
   import { getZoom, zoomToCenter, fitToView } from "../ui-state.svelte";
 
   let editing = $state(false);
@@ -39,7 +39,7 @@
     aria-label="Fit to view"
     onclick={fitToView}
   >
-    <Maximize2 size={14} />
+    <Focus size={14} />
   </button>
   <button
     class="icon-button"
