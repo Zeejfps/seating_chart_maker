@@ -1,17 +1,18 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   K_CURRENT,
   K_LEGACY,
+  K_LEGACY_BACKUP,
   K_MANIFEST,
   deleteProjectKey,
   exportSnapshotFile,
   importSnapshotFile,
+  moveLegacyToBackup,
   projectKey,
   readCurrentProjectId,
   readLegacyV1,
   readManifest,
   readProject,
-  uniqueName,
   writeCurrentProjectId,
   writeManifest,
   writeProject,
@@ -32,6 +33,10 @@ beforeEach(() => {
     setItem: (key: string, value: string) => storage.set(key, value),
     removeItem: (key: string) => storage.delete(key),
   });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 const sampleState = (): ChartState => ({
@@ -315,18 +320,18 @@ describe("snapshot export", () => {
   });
 });
 
-describe("uniqueName", () => {
-  it("returns base when unused", () => {
-    expect(uniqueName("Untitled", [])).toBe("Untitled");
+describe("moveLegacyToBackup", () => {
+  it("renames the legacy key to the backup key", () => {
+    const payload = JSON.stringify({ guests: [], tables: [] });
+    storage.set(K_LEGACY, payload);
+    moveLegacyToBackup();
+    expect(storage.has(K_LEGACY)).toBe(false);
+    expect(storage.get(K_LEGACY_BACKUP)).toBe(payload);
   });
 
-  it("appends 2 on first collision", () => {
-    expect(uniqueName("Untitled", ["Untitled"])).toBe("Untitled 2");
-  });
-
-  it("increments past existing suffixes", () => {
-    expect(
-      uniqueName("Untitled", ["Untitled", "Untitled 2", "Untitled 3"]),
-    ).toBe("Untitled 4");
+  it("is a no-op when no legacy data exists", () => {
+    moveLegacyToBackup();
+    expect(storage.has(K_LEGACY)).toBe(false);
+    expect(storage.has(K_LEGACY_BACKUP)).toBe(false);
   });
 });

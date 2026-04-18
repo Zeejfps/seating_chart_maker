@@ -231,11 +231,13 @@
     {#snippet children()}
       <p>
         You already have guests. Would you like to <strong>replace</strong>
-        everything or <strong>merge</strong> with existing data?
+        or <strong>merge</strong> with existing data?
       </p>
       <p style="font-size: 13px; margin-top: 8px; color: var(--text);">
-        Merge adds missing guests, removes guests not in the CSV, and preserves
-        existing table assignments.
+        Both options keep your tables. Replace swaps the guest list wholesale —
+        all current guests are removed and re-added from the CSV, clearing their
+        seat assignments. Merge adds missing guests and removes guests not in
+        the CSV, preserving existing seat assignments.
       </p>
     {/snippet}
     {#snippet actions()}

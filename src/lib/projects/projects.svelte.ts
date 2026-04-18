@@ -8,13 +8,13 @@ import {
   readCurrentProjectId,
   readManifest,
   readProject,
-  uniqueName,
   writeCurrentProjectId,
   writeManifest,
   writeProject,
 } from "./project-persistence";
 import type { ManifestFile, ProjectManifestEntry } from "./types";
 import { runMigrationIfNeeded } from "./migration";
+import { uniqueName } from "./naming";
 
 const DEFAULT_PROJECT_NAME = "Untitled";
 
@@ -36,8 +36,12 @@ function commitManifest(projects: ProjectManifestEntry[]): void {
   writeManifest(_manifest);
 }
 
-function existingNames(): string[] {
+function projectNames(): string[] {
   return _manifest.projects.map((p) => p.name);
+}
+
+function namesExcluding(id: string): string[] {
+  return _manifest.projects.filter((p) => p.id !== id).map((p) => p.name);
 }
 
 function addProject(
@@ -48,7 +52,7 @@ function addProject(
   const id = crypto.randomUUID();
   const entry: ProjectManifestEntry = {
     id,
-    name: uniqueName(name, existingNames()),
+    name: uniqueName(name, projectNames()),
     createdAt,
     updatedAt: Date.now(),
     guestCount: state.guests.length,
@@ -126,8 +130,12 @@ export function renameProject(id: string, rawName: string): void {
   if (!name) return;
   const entry = _manifest.projects.find((p) => p.id === id);
   if (!entry || entry.name === name) return;
+  const finalName = uniqueName(name, namesExcluding(id));
+  const now = Date.now();
   commitManifest(
-    _manifest.projects.map((p) => (p.id === id ? { ...p, name } : p)),
+    _manifest.projects.map((p) =>
+      p.id === id ? { ...p, name: finalName, updatedAt: now } : p,
+    ),
   );
 }
 
@@ -145,9 +153,11 @@ export function duplicateProject(id: string): string | null {
 
 export function deleteProject(id: string): void {
   if (_currentProjectId === id) {
-    reset();
+    // Mirror leaveProject: clear id before reset() so the trailing auto-save
+    // can't re-write empty state into a project we're about to delete.
     _currentProjectId = null;
     writeCurrentProjectId(null);
+    reset();
   }
   commitManifest(_manifest.projects.filter((p) => p.id !== id));
   deleteProjectKey(id);

@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   K_CURRENT,
   K_LEGACY,
+  K_LEGACY_BACKUP,
   K_MANIFEST,
   projectKey,
   readCurrentProjectId,
@@ -21,6 +22,10 @@ beforeEach(() => {
   vi.stubGlobal("crypto", {
     randomUUID: () => "fixed-uuid",
   });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 const validV1 = () =>
@@ -60,8 +65,9 @@ describe("runMigrationIfNeeded", () => {
     // Project key written
     expect(storage.has(projectKey("fixed-uuid"))).toBe(true);
 
-    // Legacy key preserved as backup
-    expect(storage.get(K_LEGACY)).toBe(validV1());
+    // Legacy key moved to backup (no longer at K_LEGACY)
+    expect(storage.has(K_LEGACY)).toBe(false);
+    expect(storage.get(K_LEGACY_BACKUP)).toBe(validV1());
   });
 
   it("is a no-op when a manifest already exists", () => {

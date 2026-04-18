@@ -1,4 +1,5 @@
 import {
+  moveLegacyToBackup,
   readLegacyV1,
   readManifest,
   writeCurrentProjectId,
@@ -27,4 +28,5 @@ export function runMigrationIfNeeded(): void {
     ],
   });
   writeCurrentProjectId(id);
+  moveLegacyToBackup();
 }

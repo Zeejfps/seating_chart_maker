@@ -17,6 +17,7 @@ export const K_MANIFEST = `${NS}manifest`;
 export const K_CURRENT = `${NS}currentProjectId`;
 export const projectKey = (id: string) => `${NS}project:${id}`;
 export const K_LEGACY = "seating-chart-v1";
+export const K_LEGACY_BACKUP = "seating-chart-v1.backup";
 
 export function readManifest(): ManifestFile | null {
   try {
@@ -70,6 +71,17 @@ export function writeCurrentProjectId(id: string | null): void {
 
 export function readLegacyV1(): ChartState | null {
   return readChartState(K_LEGACY);
+}
+
+export function moveLegacyToBackup(): void {
+  try {
+    const raw = localStorage.getItem(K_LEGACY);
+    if (raw === null) return;
+    localStorage.setItem(K_LEGACY_BACKUP, raw);
+    localStorage.removeItem(K_LEGACY);
+  } catch {
+    // localStorage unavailable — skip backup
+  }
 }
 
 function readChartState(key: string): ChartState | null {
@@ -278,11 +290,4 @@ function isSnapshotV2(obj: unknown): obj is SnapshotV2 {
     typeof o.state === "object" &&
     o.state !== null
   );
-}
-
-export function uniqueName(base: string, existing: string[]): string {
-  if (!existing.includes(base)) return base;
-  let n = 2;
-  while (existing.includes(`${base} ${n}`)) n++;
-  return `${base} ${n}`;
 }

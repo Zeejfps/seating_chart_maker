@@ -20,22 +20,29 @@
     fn();
   }
 
-  function handleWindowClick(e: MouseEvent) {
+  // Only mount window listeners while the menu is open so N cards don't
+  // each keep a global click/keydown handler.
+  $effect(() => {
     if (!open) return;
-    if (rootEl && e.target instanceof Node && !rootEl.contains(e.target)) {
-      open = false;
-    }
-  }
-
-  function handleKeydown(e: KeyboardEvent) {
-    if (open && e.key === "Escape") {
-      e.stopPropagation();
-      open = false;
-    }
-  }
+    const onClick = (e: MouseEvent) => {
+      if (rootEl && e.target instanceof Node && !rootEl.contains(e.target)) {
+        open = false;
+      }
+    };
+    const onKeydown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        open = false;
+      }
+    };
+    window.addEventListener("click", onClick);
+    window.addEventListener("keydown", onKeydown);
+    return () => {
+      window.removeEventListener("click", onClick);
+      window.removeEventListener("keydown", onKeydown);
+    };
+  });
 </script>
-
-<svelte:window onclick={handleWindowClick} onkeydown={handleKeydown} />
 
 <div class="menu-root" bind:this={rootEl}>
   <button
