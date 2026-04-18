@@ -27,16 +27,12 @@ export interface Command {
   description: string;
 }
 
-export interface Snapshot {
-  version: 1;
-  guests: Guest[];
-  tables: Table[];
-}
-
 export type ModalState =
   | { type: "delete-table"; table: Table }
   | { type: "delete-guest"; guest: Guest }
   | { type: "csv-import"; names: string[] }
-  | { type: "snapshot-import"; state: ChartState }
-  | { type: "new-project" }
+  | {
+      type: "confirm-delete-project";
+      entry: { id: string; name: string };
+    }
   | { type: "error"; message: string };

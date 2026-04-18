@@ -1,23 +1,32 @@
 <script lang="ts">
-  import { getTables, getGuests, getState, replaceAll } from "../state.svelte";
+  import { getGuests } from "../state.svelte";
   import {
     getCanUndo,
     getCanRedo,
     undo,
     redo,
-    clearHistory,
     executeCommand,
   } from "../command-history.svelte";
-  import { exportSnapshot, importSnapshot, pickFile } from "../persistence";
+  import { pickFile } from "../projects/project-persistence";
+  import {
+    exportProject,
+    getCurrentEntry,
+    getCurrentProjectId,
+    importAsNewProject,
+    enterProject,
+    renameProject,
+  } from "../projects/projects.svelte";
   import { AddGuestCommand, BatchCommand } from "../commands";
   import { parseCsv } from "../csv";
   import type { ModalState } from "../types";
+  import InlineEdit from "./InlineEdit.svelte";
 
   interface Props {
     searchQuery: string;
     searchInputEl?: HTMLInputElement;
     onsearch: (query: string) => void;
     onshowmodal: (modal: ModalState) => void;
+    onback: () => void;
   }
 
   let {
@@ -25,28 +34,21 @@
     searchInputEl = $bindable(),
     onsearch,
     onshowmodal,
+    onback,
   }: Props = $props();
 
-  function handleNew() {
-    if (getGuests().length === 0 && getTables().length === 0) return;
-    onshowmodal({ type: "new-project" });
-  }
-
   function handleExport() {
-    exportSnapshot(getState());
+    const id = getCurrentProjectId();
+    if (!id) return;
+    exportProject(id);
   }
 
   async function handleImport() {
     const file = await pickFile(".json,application/json");
     if (!file) return;
     try {
-      const state = await importSnapshot(file);
-      if (getGuests().length > 0 || getTables().length > 0) {
-        onshowmodal({ type: "snapshot-import", state });
-      } else {
-        clearHistory();
-        replaceAll(state);
-      }
+      const newId = await importAsNewProject(file);
+      enterProject(newId);
     } catch {
       onshowmodal({
         type: "error",
@@ -79,7 +81,19 @@
 </script>
 
 <div class="toolbar">
-  <h1>Wedding Seating Chart</h1>
+  <button class="back" onclick={onback} title="Back to projects">
+    ← Projects
+  </button>
+
+  {#if getCurrentEntry()}
+    {@const entry = getCurrentEntry()!}
+    <h1 class="project-title" title="Double-click to rename">
+      <InlineEdit
+        value={entry.name}
+        oncommit={(name) => renameProject(entry.id, name)}
+      />
+    </h1>
+  {/if}
 
   <div class="toolbar-separator"></div>
 
@@ -110,7 +124,6 @@
   <div class="toolbar-separator"></div>
 
   <div class="toolbar-group">
-    <button onclick={handleNew}>New</button>
     <button onclick={handleExport}>Save</button>
     <button onclick={handleImport}>Load</button>
   </div>
@@ -131,6 +144,13 @@
     font-size: 18px;
   }
 
+  .project-title {
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .toolbar-group {
     display: flex;
     align-items: center;
@@ -149,5 +169,9 @@
     height: 24px;
     background: var(--border);
     margin: 0 4px;
+  }
+
+  .back {
+    padding: 5px 10px;
   }
 </style>

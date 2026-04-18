@@ -88,6 +88,12 @@ function replaceAll(state: ChartState) {
   _tables = state.tables;
 }
 
+function reset() {
+  _guests = [];
+  _tables = [];
+  _dndActive = false;
+}
+
 function getState(): ChartState {
   return { guests: _guests, tables: _tables };
 }
@@ -107,6 +113,7 @@ export {
   updateTable,
   reorderGuests,
   replaceAll,
+  reset,
   getState,
   getNextTableNum,
 };
