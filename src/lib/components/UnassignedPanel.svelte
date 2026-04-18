@@ -96,7 +96,7 @@
     onmousedown={(e) => e.stopPropagation()}
   >
     <div class="panel-header">
-      <span class="panel-title">Unassigned</span>
+      <span class="panel-title">Guests</span>
       <button
         class="header-btn"
         onclick={handleCsvImport}
