@@ -21,6 +21,7 @@
   import { isZoomGesture, scrollPan, zoomAtPointer } from "../floor-plan/wheel";
   import { computeHighlightedTableIds } from "../floor-plan/search-highlight";
   import { useTableDndState } from "../floor-plan/dnd-state.svelte";
+  import { getViewOnly } from "../ui-state.svelte";
   import Table from "./Table.svelte";
   import ContextMenu, { type ContextMenuState } from "./ContextMenu.svelte";
 
@@ -133,6 +134,7 @@
   function handleTableMouseDown(e: MouseEvent, tableId: string) {
     if (e.button !== 0) return;
     e.stopPropagation();
+    if (getViewOnly()) return;
     const canvas = pointerToCanvas(e);
     if (!canvas) return;
     closeContextMenu();
@@ -147,22 +149,24 @@
     }
     if (isDndActive()) return;
     onselecttable(tableId);
-    openTableMenu(e, tableId);
+    if (!getViewOnly()) openTableMenu(e, tableId);
   }
 
   function handleTableContextMenu(e: MouseEvent, tableId: string) {
     if (isDndActive()) return;
     e.preventDefault();
     e.stopPropagation();
+    if (getViewOnly()) return;
     openTableMenu(e, tableId);
     onselecttable(tableId);
   }
 
   function handleCanvasContextMenu(e: MouseEvent) {
     if (isDndActive()) return;
+    e.preventDefault();
+    if (getViewOnly()) return;
     const canvas = pointerToCanvas(e);
     if (!canvas) return;
-    e.preventDefault();
     openCanvasMenu(e, canvas);
   }
 

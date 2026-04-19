@@ -18,6 +18,7 @@
   import { isTypingTarget, runShortcuts } from "../keyboard/shortcuts";
   import { buildEditorShortcuts } from "../keyboard/editor-shortcuts";
   import { useAutosave } from "../autosave.svelte";
+  import { getViewOnly } from "../ui-state.svelte";
   import {
     deleteGuest,
     deleteTable,
@@ -90,6 +91,10 @@
   function handleKeydown(e: KeyboardEvent) {
     if (isTypingTarget(e.target)) return;
     if (modal) return;
+    if (getViewOnly()) {
+      if (e.key === "Escape") selectedTableId = null;
+      return;
+    }
     runShortcuts(e, shortcuts);
   }
 
@@ -117,9 +122,11 @@
     bind:searchInputEl
     onsearch={(q) => (searchQuery = q)}
   />
-  <ActionsBar />
-  <GuestPanel {searchQuery} onshowmodal={showModal} />
-  <AddTableBar />
+  {#if !getViewOnly()}
+    <ActionsBar />
+    <GuestPanel {searchQuery} onshowmodal={showModal} />
+    <AddTableBar />
+  {/if}
   <StatsBar />
   <ViewControlsBar />
 </main>

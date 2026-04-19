@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { ArrowLeft, Upload } from "lucide-svelte";
+  import { ArrowLeft, Eye, EyeOff, Upload } from "lucide-svelte";
   import {
     exportProject,
     getCurrentEntry,
     getCurrentProjectId,
     renameProject,
   } from "../projects/projects.svelte";
+  import { getViewOnly, toggleViewOnly } from "../ui-state.svelte";
   import InlineEdit from "./InlineEdit.svelte";
 
   interface Props {
@@ -15,6 +16,7 @@
   let { onback }: Props = $props();
 
   const entry = $derived(getCurrentEntry());
+  const viewOnly = $derived(getViewOnly());
 
   function handleExport() {
     const id = getCurrentProjectId();
@@ -25,33 +27,49 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="floating-bar title-bar" onmousedown={(e) => e.stopPropagation()}>
-  <button
-    class="icon-button"
-    onclick={onback}
-    title="Back to projects"
-    aria-label="Back to projects"
-  >
-    <ArrowLeft size={18} />
-  </button>
+  {#if !viewOnly}
+    <button
+      class="icon-button"
+      onclick={onback}
+      title="Back to projects"
+      aria-label="Back to projects"
+    >
+      <ArrowLeft size={18} />
+    </button>
 
-  {#if entry}
-    <h1 class="project-title" title="Double-click to rename">
-      <InlineEdit
-        value={entry.name}
-        oncommit={(name) => renameProject(entry.id, name)}
-      />
-    </h1>
+    {#if entry}
+      <h1 class="project-title" title="Double-click to rename">
+        <InlineEdit
+          value={entry.name}
+          oncommit={(name) => renameProject(entry.id, name)}
+        />
+      </h1>
+    {/if}
+
+    <div class="title-bar-separator"></div>
+
+    <button
+      class="icon-text-button"
+      onclick={handleExport}
+      title="Export project as JSON"
+    >
+      <Upload size={16} />
+      <span>Export</span>
+    </button>
   {/if}
-
-  <div class="title-bar-separator"></div>
 
   <button
     class="icon-text-button"
-    onclick={handleExport}
-    title="Export project as JSON"
+    class:active={viewOnly}
+    onclick={toggleViewOnly}
+    title={viewOnly ? "Exit preview" : "Preview as guest"}
   >
-    <Upload size={16} />
-    <span>Export</span>
+    {#if viewOnly}
+      <EyeOff size={16} />
+    {:else}
+      <Eye size={16} />
+    {/if}
+    <span>{viewOnly ? "Exit Preview" : "Preview"}</span>
   </button>
 </div>
 
@@ -115,5 +133,11 @@
   .icon-text-button:hover {
     background: var(--card-bg);
     color: var(--accent);
+  }
+
+  .icon-text-button.active {
+    background: var(--accent-bg);
+    color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent-border);
   }
 </style>
