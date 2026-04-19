@@ -9,7 +9,7 @@
     ChangeTableCapacityCommand,
     RotateTableCommand,
   } from "../commands";
-  import { reorderIfChanged, transformDraggedElement } from "../dnd-utils";
+  import { reorderIfChanged, sharedGuestDndOpts } from "../dnd-utils";
   import { addTableAt } from "../table-factory";
   import {
     canChangeCapacity,
@@ -241,18 +241,9 @@
         <div
           class="menu-guest-list"
           use:dndzone={{
+            ...sharedGuestDndOpts,
             items: localGuests,
-            type: "guest",
-            flipDurationMs: 150,
-            morphDisabled: true,
-            centreDraggedOnCursor: false,
-            useCursorForDetection: true,
             dropFromOthersDisabled: true,
-            transformDraggedElement,
-            dropTargetStyle: {
-              outline: "2px solid rgba(170, 59, 255, 0.5)",
-              "background-color": "rgba(170, 59, 255, 0.05)",
-            },
           }}
           onconsider={handleGuestDndConsider}
           onfinalize={handleGuestDndFinalize}

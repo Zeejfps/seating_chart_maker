@@ -1,6 +1,11 @@
 import { getGuests } from "./state.svelte";
 import { executeCommand } from "./command-history.svelte";
-import { AssignGuestCommand, ReorderGuestsCommand } from "./commands";
+import {
+  AssignGuestCommand,
+  BatchCommand,
+  ReorderGuestsCommand,
+  UnassignGuestCommand,
+} from "./commands";
 import type { Guest } from "./types";
 
 /** Style a dragged guest element as a compact pill. */
@@ -41,4 +46,37 @@ export function reorderIfChanged(newItems: Guest[], oldItems: Guest[]): void {
   if (changed) {
     executeCommand(new ReorderGuestsCommand(newOrder, oldOrder));
   }
+}
+
+/** Shared DnD options for guest dropzones inside the guest panel and tables. */
+export const sharedGuestDndOpts = {
+  type: "guest",
+  centreDraggedOnCursor: false,
+  useCursorForDetection: true,
+  flipDurationMs: 150,
+  morphDisabled: true,
+  transformDraggedElement,
+  dropTargetStyle: {
+    outline: "2px solid rgba(170, 59, 255, 0.5)",
+    "background-color": "rgba(170, 59, 255, 0.05)",
+  },
+};
+
+/** For guests dropped into an unassigned zone: unassign any that were previously
+    seated. Returns the number of unassignments performed. */
+export function unassignGuestsFromDnd(newItems: Guest[]): number {
+  const byId = new Map(getGuests().map((g) => [g.id, g]));
+  const cmds: UnassignGuestCommand[] = [];
+  for (const item of newItems) {
+    const original = byId.get(item.id);
+    if (original && original.tableId !== null) {
+      cmds.push(new UnassignGuestCommand(original.id, original.tableId));
+    }
+  }
+  if (cmds.length === 1) {
+    executeCommand(cmds[0]);
+  } else if (cmds.length > 1) {
+    executeCommand(new BatchCommand(cmds, "Unassign guests"));
+  }
+  return cmds.length;
 }
