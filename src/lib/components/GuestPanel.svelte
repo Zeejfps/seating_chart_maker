@@ -5,7 +5,7 @@
   import { executeCommand } from "../command-history.svelte";
   import { AddGuestCommand, BatchCommand } from "../commands";
   import { parseCsv } from "../csv";
-  import { pickFile } from "../projects/project-persistence";
+  import { pickFile } from "../projects/file-io";
   import type { ModalState } from "../types";
   import {
     getUnassignedCollapsed,
@@ -13,10 +13,10 @@
     getUnassignedWidth,
     setUnassignedWidth,
     commitUnassignedWidth,
-    setSectionOpen,
     UNASSIGNED_MIN_WIDTH,
     UNASSIGNED_MAX_WIDTH,
-  } from "../ui-state.svelte";
+  } from "../ui/unassigned-panel.svelte";
+  import { setSectionOpen } from "../ui/guest-sections.svelte";
   import CollapsedGuestPill from "./CollapsedGuestPill.svelte";
   import GuestAddRow from "./GuestAddRow.svelte";
   import UnassignedGuestsSection from "./UnassignedGuestsSection.svelte";

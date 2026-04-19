@@ -1,30 +1,26 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import {
-    getTables,
-    getGuestsByTable,
-    setDndActive,
-    isDndActive,
-  } from "../state.svelte";
+  import { getTables, getGuestsByTable, isDndActive } from "../state.svelte";
   import { CANVAS_W, CANVAS_H } from "../grid";
-  import { assignGuestIfChanged } from "../dnd-utils";
-  import { TRIGGERS } from "svelte-dnd-action";
-  import type { Guest, ModalState } from "../types";
-  import { getTableHalfSize } from "../table-shapes";
+  import type { ModalState } from "../types";
   import {
     getZoom,
-    setZoom,
     getPanX,
-    setPanX,
     getPanY,
-    setPanY,
     setViewportEl,
-    clampZoom,
     centerView,
-  } from "../ui-state.svelte";
-  import * as pan from "../viewport-pan.svelte";
-  import * as drag from "../table-drag.svelte";
-  import { buildDndItemsByTable, filterShadowItems } from "../floor-plan-dnd";
+  } from "../ui/viewport-state.svelte";
+  import * as pan from "../floor-plan/viewport-pan.svelte";
+  import * as drag from "../floor-plan/table-drag.svelte";
+  import {
+    clientToCanvas,
+    hitTestTable,
+    isInsideRect,
+    type CanvasPoint,
+  } from "../floor-plan/coordinates";
+  import { isZoomGesture, scrollPan, zoomAtPointer } from "../floor-plan/wheel";
+  import { computeHighlightedTableIds } from "../floor-plan/search-highlight";
+  import { useTableDndState } from "../floor-plan/dnd-state.svelte";
   import Table from "./Table.svelte";
   import ContextMenu, { type ContextMenuState } from "./ContextMenu.svelte";
 
@@ -34,7 +30,7 @@
     onselecttable: (id: string | null) => void;
     onshowmodal: (modal: ModalState) => void;
     onhoverchange?: (id: string | null) => void;
-    oncursorchange?: (pos: { x: number; y: number } | null) => void;
+    oncursorchange?: (pos: CanvasPoint | null) => void;
     oncursoroverchange?: (over: boolean) => void;
   }
 
@@ -50,90 +46,78 @@
 
   let viewportEl: HTMLDivElement | undefined = $state();
   let contextMenu: ContextMenuState | null = $state(null);
-  let cursorCanvas: { x: number; y: number } | null = $state(null);
+  let cursorCanvas: CanvasPoint | null = $state(null);
   let isCursorOverViewport = $state(false);
+  let movedDuringLastDrag = false;
+  let hasCentered = false;
 
-  function hitTestTable(pos: { x: number; y: number }): string | null {
-    const tables = getTables();
-    for (let i = tables.length - 1; i >= 0; i--) {
-      const t = tables[i];
-      const { halfW, halfH } = getTableHalfSize(t);
-      if (
-        pos.x >= t.x - halfW &&
-        pos.x <= t.x + halfW &&
-        pos.y >= t.y - halfH &&
-        pos.y <= t.y + halfH
-      ) {
-        return t.id;
-      }
-    }
-    return null;
-  }
+  const dnd = useTableDndState();
 
   let hoveredTableId = $derived(
-    isCursorOverViewport && cursorCanvas ? hitTestTable(cursorCanvas) : null,
+    isCursorOverViewport && cursorCanvas
+      ? hitTestTable(cursorCanvas, getTables())
+      : null,
   );
+  let highlightedTableIds = $derived(
+    computeHighlightedTableIds(searchQuery, getTables(), getGuestsByTable()),
+  );
+  let isSearching = $derived(searchQuery.length > 0);
 
   $effect(() => onhoverchange?.(hoveredTableId));
   $effect(() => oncursorchange?.(cursorCanvas));
   $effect(() => oncursoroverchange?.(isCursorOverViewport));
 
-  let highlightedTableIds: Set<string> = $derived.by(() => {
-    if (!searchQuery) return new Set<string>();
-    const q = searchQuery.toLowerCase();
-    const ids = new Set<string>();
-    for (const [tableId, guests] of getGuestsByTable()) {
-      if (guests.some((g) => g.name.toLowerCase().includes(q)))
-        ids.add(tableId);
-    }
-    for (const t of getTables()) {
-      if (t.name.toLowerCase().includes(q)) ids.add(t.id);
-    }
-    return ids;
-  });
-  let isSearching = $derived(searchQuery.length > 0);
-
   function viewportRect(): DOMRect | null {
-    return viewportEl ? viewportEl.getBoundingClientRect() : null;
+    return viewportEl?.getBoundingClientRect() ?? null;
   }
 
-  function clientToCanvas(
-    clientX: number,
-    clientY: number,
-    rect: DOMRect,
-  ): { x: number; y: number } {
-    return {
-      x: (clientX - rect.left - getPanX()) / getZoom(),
-      y: (clientY - rect.top - getPanY()) / getZoom(),
+  function pointerToCanvas(e: MouseEvent): CanvasPoint | null {
+    const rect = viewportRect();
+    return rect ? clientToCanvas(e.clientX, e.clientY, rect) : null;
+  }
+
+  function closeContextMenu() {
+    contextMenu = null;
+  }
+
+  function openTableMenu(e: MouseEvent, tableId: string) {
+    contextMenu = {
+      x: e.clientX,
+      y: e.clientY,
+      context: { type: "table", tableId },
+    };
+  }
+
+  function openCanvasMenu(e: MouseEvent, canvas: CanvasPoint) {
+    contextMenu = {
+      x: e.clientX,
+      y: e.clientY,
+      context: { type: "canvas", canvasX: canvas.x, canvasY: canvas.y },
     };
   }
 
   function handleViewportMouseDown(e: MouseEvent) {
     if (e.button !== 0) return;
-    contextMenu = null;
+    closeContextMenu();
     pan.startPan(e);
   }
 
   function handleWindowMouseMove(e: MouseEvent) {
     const rect = viewportRect();
     if (!rect) return;
-    const inside =
-      e.clientX >= rect.left &&
-      e.clientX <= rect.right &&
-      e.clientY >= rect.top &&
-      e.clientY <= rect.bottom;
-    isCursorOverViewport = inside;
-    cursorCanvas = inside ? clientToCanvas(e.clientX, e.clientY, rect) : null;
+    isCursorOverViewport = isInsideRect(rect, e.clientX, e.clientY);
+    cursorCanvas = isCursorOverViewport
+      ? clientToCanvas(e.clientX, e.clientY, rect)
+      : null;
     if (pan.isPanning()) {
       pan.updatePan(e);
       return;
     }
-    if (drag.dragTableId()) {
-      drag.updateTableDrag(clientToCanvas(e.clientX, e.clientY, rect));
+    if (drag.dragTableId() && cursorCanvas) {
+      drag.updateTableDrag(cursorCanvas);
     }
   }
 
-  let movedDuringLastDrag = false;
   function handleWindowMouseUp() {
     if (pan.isPanning()) {
       const { didPan } = pan.finalizePan();
@@ -149,10 +133,10 @@
   function handleTableMouseDown(e: MouseEvent, tableId: string) {
     if (e.button !== 0) return;
     e.stopPropagation();
-    const rect = viewportRect();
-    if (!rect) return;
-    contextMenu = null;
-    drag.startTableDrag(tableId, clientToCanvas(e.clientX, e.clientY, rect));
+    const canvas = pointerToCanvas(e);
+    if (!canvas) return;
+    closeContextMenu();
+    drag.startTableDrag(tableId, canvas);
   }
 
   function handleTableClick(e: MouseEvent, tableId: string) {
@@ -163,101 +147,36 @@
     }
     if (isDndActive()) return;
     onselecttable(tableId);
-    contextMenu = {
-      x: e.clientX,
-      y: e.clientY,
-      context: { type: "table", tableId },
-    };
-  }
-
-  function handleCanvasContextMenu(e: MouseEvent) {
-    if (isDndActive()) return;
-    const rect = viewportRect();
-    if (!rect) return;
-    e.preventDefault();
-    const canvasPos = clientToCanvas(e.clientX, e.clientY, rect);
-    contextMenu = {
-      x: e.clientX,
-      y: e.clientY,
-      context: { type: "canvas", canvasX: canvasPos.x, canvasY: canvasPos.y },
-    };
+    openTableMenu(e, tableId);
   }
 
   function handleTableContextMenu(e: MouseEvent, tableId: string) {
     if (isDndActive()) return;
     e.preventDefault();
     e.stopPropagation();
-    contextMenu = {
-      x: e.clientX,
-      y: e.clientY,
-      context: { type: "table", tableId },
-    };
+    openTableMenu(e, tableId);
     onselecttable(tableId);
   }
 
-  function zoomAtPointer(e: WheelEvent) {
-    const rect = viewportEl!.getBoundingClientRect();
-    const pointerX = e.clientX - rect.left;
-    const pointerY = e.clientY - rect.top;
-    const oldZoom = getZoom();
-    const newZoom = clampZoom(oldZoom * (1 - e.deltaY * 0.005));
-    setPanX(pointerX - (pointerX - getPanX()) * (newZoom / oldZoom));
-    setPanY(pointerY - (pointerY - getPanY()) * (newZoom / oldZoom));
-    setZoom(newZoom);
-  }
-
-  function scrollPan(e: WheelEvent) {
-    if (e.shiftKey) {
-      setPanX(getPanX() - e.deltaY);
-    } else {
-      setPanX(getPanX() - e.deltaX);
-      setPanY(getPanY() - e.deltaY);
-    }
+  function handleCanvasContextMenu(e: MouseEvent) {
+    if (isDndActive()) return;
+    const canvas = pointerToCanvas(e);
+    if (!canvas) return;
+    e.preventDefault();
+    openCanvasMenu(e, canvas);
   }
 
   function handleWheel(e: WheelEvent) {
     if (!viewportEl) return;
-    contextMenu = null;
-    if (e.ctrlKey || e.metaKey) {
+    closeContextMenu();
+    if (isZoomGesture(e)) {
       e.preventDefault();
-      zoomAtPointer(e);
+      zoomAtPointer(e, viewportEl.getBoundingClientRect());
     } else {
       scrollPan(e);
     }
   }
 
-  let dndItemsByTable: Map<string, Guest[]> = $state(new Map());
-  let dndDraggingTable: string | null = $state(null);
-
-  $effect(() => {
-    if (dndDraggingTable) return;
-    dndItemsByTable = buildDndItemsByTable(getTables(), getGuestsByTable());
-  });
-
-  function handleDndConsider(tableId: string, e: CustomEvent) {
-    const trigger = e.detail.info.trigger;
-    if (trigger === TRIGGERS.DRAGGED_ENTERED) {
-      dndDraggingTable = tableId;
-    } else if (
-      trigger === TRIGGERS.DRAGGED_LEFT ||
-      trigger === TRIGGERS.DRAGGED_LEFT_ALL
-    ) {
-      if (dndDraggingTable === tableId) dndDraggingTable = null;
-    }
-    setDndActive(true);
-    const items = filterShadowItems(e.detail.items, e.detail.info.id ?? null);
-    dndItemsByTable = new Map(dndItemsByTable).set(tableId, items);
-  }
-
-  function handleDndFinalize(tableId: string, e: CustomEvent) {
-    dndDraggingTable = null;
-    setDndActive(false);
-    const newItems: Guest[] = e.detail.items;
-    for (const item of newItems) assignGuestIfChanged(item.id, tableId);
-    dndItemsByTable = new Map(dndItemsByTable).set(tableId, newItems);
-  }
-
-  let hasCentered = false;
   onMount(() => {
     window.addEventListener("mousemove", handleWindowMouseMove);
     window.addEventListener("mouseup", handleWindowMouseUp);
@@ -271,9 +190,9 @@
     };
   });
 
+  // Center once the first table appears (e.g. after an async project load).
   $effect(() => {
-    const tables = getTables();
-    if (tables.length > 0 && !hasCentered) {
+    if (getTables().length > 0 && !hasCentered) {
       hasCentered = true;
       centerView();
     }
@@ -296,30 +215,27 @@
   >
     {#each getTables() as table (table.id)}
       {@const isDragging = drag.dragTableId() === table.id}
+      {@const items = dnd.itemsByTable.get(table.id) ?? []}
       <Table
         {table}
-        guestCount={(dndItemsByTable.get(table.id) ?? []).length}
-        dndItems={dndItemsByTable.get(table.id) ?? []}
+        guestCount={items.length}
+        dndItems={items}
         isSelected={selectedTableId === table.id}
         {isDragging}
-        isDndHover={dndDraggingTable === table.id}
+        isDndHover={dnd.draggingTable === table.id}
         isDimmed={isSearching && !highlightedTableIds.has(table.id)}
         x={isDragging ? drag.dragCurrentX() : table.x}
         y={isDragging ? drag.dragCurrentY() : table.y}
         onmousedown={(e) => handleTableMouseDown(e, table.id)}
         onclick={(e) => handleTableClick(e, table.id)}
         oncontextmenu={(e) => handleTableContextMenu(e, table.id)}
-        ondndconsider={(e) => handleDndConsider(table.id, e)}
-        ondndfinalize={(e) => handleDndFinalize(table.id, e)}
+        ondndconsider={(e) => dnd.onConsider(table.id, e)}
+        ondndfinalize={(e) => dnd.onFinalize(table.id, e)}
       />
     {/each}
   </div>
 
-  <ContextMenu
-    menu={contextMenu}
-    onclose={() => (contextMenu = null)}
-    {onshowmodal}
-  />
+  <ContextMenu menu={contextMenu} onclose={closeContextMenu} {onshowmodal} />
 </div>
 
 <style>

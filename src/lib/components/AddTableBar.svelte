@@ -45,7 +45,7 @@
   </button>
   {#if showMenu}
     <div class="shape-menu">
-      {#each TABLE_SHAPES as shape}
+      {#each TABLE_SHAPES as shape (shape)}
         <button onclick={() => handleAdd(shape)}>
           {TABLE_SHAPE_LABELS[shape]}
         </button>

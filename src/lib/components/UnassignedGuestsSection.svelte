@@ -6,7 +6,10 @@
     setDndActive,
     isDndActive,
   } from "../state.svelte";
-  import { getSectionOpen, toggleSectionOpen } from "../ui-state.svelte";
+  import {
+    getSectionOpen,
+    toggleSectionOpen,
+  } from "../ui/guest-sections.svelte";
   import {
     sharedGuestDndOpts,
     reorderIfChanged,

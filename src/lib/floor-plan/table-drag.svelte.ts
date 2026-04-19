@@ -1,7 +1,7 @@
-import { getTables } from "./state.svelte";
-import { executeCommand } from "./command-history.svelte";
-import { moveTable } from "./commands";
-import { clampToCanvas, snapToGrid } from "./grid";
+import { getTables } from "../state.svelte";
+import { executeCommand } from "../command-history.svelte";
+import { moveTable } from "../commands";
+import { clampToCanvas, snapToGrid } from "../grid";
 
 let _dragTableId: string | null = $state(null);
 let _dragCurrentX = $state(0);

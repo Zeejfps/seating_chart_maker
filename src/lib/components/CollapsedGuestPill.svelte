@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Users } from "lucide-svelte";
   import { getGuests, getUnassignedGuests } from "../state.svelte";
-  import { setUnassignedCollapsed } from "../ui-state.svelte";
+  import { setUnassignedCollapsed } from "../ui/unassigned-panel.svelte";
 
   let unassignedCount = $derived(getUnassignedGuests().length);
   let totalCount = $derived(getGuests().length);

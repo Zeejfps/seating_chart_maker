@@ -2,7 +2,10 @@
   import { ChevronDown, ChevronRight } from "lucide-svelte";
   import { dndzone } from "svelte-dnd-action";
   import { getGuests, getTables, setDndActive } from "../state.svelte";
-  import { getSectionOpen, toggleSectionOpen } from "../ui-state.svelte";
+  import {
+    getSectionOpen,
+    toggleSectionOpen,
+  } from "../ui/guest-sections.svelte";
   import { sharedGuestDndOpts } from "../dnd-utils";
   import type { Guest, ModalState } from "../types";
   import GuestItem from "./GuestItem.svelte";

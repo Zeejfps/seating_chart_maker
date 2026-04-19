@@ -5,7 +5,7 @@ import {
   writeCurrentProjectId,
   writeManifest,
   writeProject,
-} from "./project-persistence";
+} from "./storage";
 
 export function runMigrationIfNeeded(): void {
   if (readManifest()) return;

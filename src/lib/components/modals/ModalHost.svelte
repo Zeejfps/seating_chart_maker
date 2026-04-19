@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ModalState } from "../../types";
+  import type { Guest, ModalState, Table } from "../../types";
   import CsvImportModal from "./CsvImportModal.svelte";
   import DeleteTableModal from "./DeleteTableModal.svelte";
   import DeleteGuestModal from "./DeleteGuestModal.svelte";
@@ -9,11 +9,11 @@
   interface Props {
     modal: ModalState | null;
     onclose: () => void;
-    onCsvReplace?: () => void;
-    onCsvMerge?: () => void;
-    onConfirmDeleteTable?: () => void;
-    onConfirmDeleteGuest?: () => void;
-    onConfirmDeleteProject?: () => void;
+    onCsvReplace?: (names: string[]) => void;
+    onCsvMerge?: (names: string[]) => void;
+    onConfirmDeleteTable?: (table: Table) => void;
+    onConfirmDeleteGuest?: (guest: Guest) => void;
+    onConfirmDeleteProject?: (entry: { id: string; name: string }) => void;
   }
   let {
     modal,
@@ -24,33 +24,31 @@
     onConfirmDeleteGuest,
     onConfirmDeleteProject,
   }: Props = $props();
-
-  const noop = () => {};
 </script>
 
 {#if modal?.type === "csv-import"}
   <CsvImportModal
     {onclose}
-    onreplace={onCsvReplace ?? noop}
-    onmerge={onCsvMerge ?? noop}
+    onreplace={() => onCsvReplace?.(modal.names)}
+    onmerge={() => onCsvMerge?.(modal.names)}
   />
 {:else if modal?.type === "delete-table"}
   <DeleteTableModal
     table={modal.table}
     {onclose}
-    onconfirm={onConfirmDeleteTable ?? noop}
+    onconfirm={() => onConfirmDeleteTable?.(modal.table)}
   />
 {:else if modal?.type === "delete-guest"}
   <DeleteGuestModal
     guest={modal.guest}
     {onclose}
-    onconfirm={onConfirmDeleteGuest ?? noop}
+    onconfirm={() => onConfirmDeleteGuest?.(modal.guest)}
   />
 {:else if modal?.type === "confirm-delete-project"}
   <ConfirmDeleteProjectModal
     projectName={modal.entry.name}
     {onclose}
-    onconfirm={onConfirmDeleteProject ?? noop}
+    onconfirm={() => onConfirmDeleteProject?.(modal.entry)}
   />
 {:else if modal?.type === "error"}
   <ErrorModal message={modal.message} {onclose} />

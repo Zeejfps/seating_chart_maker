@@ -2,7 +2,7 @@
   import type { Guest, Table } from "../types";
   import CapacityBadge from "./CapacityBadge.svelte";
   import { dndzone } from "svelte-dnd-action";
-  import { chairPositionsFor, getTableLayout } from "../table-geometry";
+  import { chairPositionsFor, getTableLayout } from "../shapes/registry";
 
   interface Props {
     table: Table;

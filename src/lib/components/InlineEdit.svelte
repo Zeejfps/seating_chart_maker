@@ -10,6 +10,7 @@
     value,
     oncommit,
     onediting,
+    // eslint-disable-next-line no-useless-assignment
     triggerEdit = $bindable(),
   }: Props = $props();
 

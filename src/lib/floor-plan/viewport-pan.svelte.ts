@@ -1,4 +1,9 @@
-import { getPanX, setPanX, getPanY, setPanY } from "./ui-state.svelte";
+import {
+  getPanX,
+  setPanX,
+  getPanY,
+  setPanY,
+} from "../ui/viewport-state.svelte";
 
 let _isPanning = $state(false);
 let startMouseX = 0;

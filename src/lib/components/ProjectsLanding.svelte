@@ -9,7 +9,7 @@
     importAsNewProject,
     renameProject,
   } from "../projects/projects.svelte";
-  import { pickFile } from "../projects/project-persistence";
+  import { pickFile } from "../projects/file-io";
   import type { ProjectManifestEntry } from "../projects/types";
   import type { ModalState } from "../types";
   import ProjectCard from "./ProjectCard.svelte";
@@ -57,9 +57,8 @@
     });
   }
 
-  function handleDeleteConfirm() {
-    if (modal?.type !== "confirm-delete-project") return;
-    deleteProject(modal.entry.id);
+  function handleDeleteConfirm(entry: { id: string; name: string }) {
+    deleteProject(entry.id);
     closeModal();
   }
 </script>

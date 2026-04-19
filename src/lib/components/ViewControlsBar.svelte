@@ -1,6 +1,10 @@
 <script lang="ts">
   import { ZoomIn, ZoomOut, Focus } from "lucide-svelte";
-  import { getZoom, zoomToCenter, fitToView } from "../ui-state.svelte";
+  import {
+    getZoom,
+    zoomToCenter,
+    fitToView,
+  } from "../ui/viewport-state.svelte";
 
   let editing = $state(false);
   let inputValue = $state("");

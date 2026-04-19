@@ -1,4 +1,4 @@
-import type { Table, TableShape } from "./types";
+import type { TableShape } from "./types";
 
 export const SHAPE_DEFAULTS = {
   round: { capacity: 8, minCapacity: 2, maxCapacity: 12 },
@@ -21,32 +21,6 @@ export const TABLE_SHAPE_LABELS: Record<TableShape, string> = {
   row: "Ceremony Row",
 };
 
-export const RECT_SEAT_SPACING = 30;
-export const RECT_HEIGHT = 50;
-export const RECT_MIN_WIDTH = 120;
-export const RECT_CHAIR_OFFSET = 18;
-
-export const SWEETHEART_WIDTH = 80;
-export const SWEETHEART_HEIGHT = 50;
-
-export const ROW_SEAT_SPACING = 30;
-export const ROW_HEIGHT = 6;
-export const ROW_PADDING = 10;
-export const ROW_CHAIR_OFFSET = 14;
-const ROW_CHAIR_SIZE = 12;
-export const ROW_HITBOX_PAD_X = 6;
-export const ROW_HITBOX_HEIGHT =
-  (ROW_CHAIR_OFFSET + ROW_CHAIR_SIZE) * 2 + ROW_HEIGHT;
-
-export function getRectWidth(capacity: number): number {
-  const seatsPerSide = Math.ceil(capacity / 2);
-  return Math.max(RECT_MIN_WIDTH, seatsPerSide * RECT_SEAT_SPACING);
-}
-
-export function getRowWidth(capacity: number): number {
-  return capacity * ROW_SEAT_SPACING + ROW_PADDING;
-}
-
 export function canChangeCapacity(shape: TableShape): boolean {
   return shape !== "sweetheart";
 }
@@ -54,24 +28,4 @@ export function canChangeCapacity(shape: TableShape): boolean {
 export function clampCapacity(shape: TableShape, desired: number): number {
   const { minCapacity, maxCapacity } = SHAPE_DEFAULTS[shape];
   return Math.max(minCapacity, Math.min(maxCapacity, desired));
-}
-
-export function getTableHalfSize(t: Table): {
-  halfW: number;
-  halfH: number;
-} {
-  let halfW: number, halfH: number;
-  if (t.shape === "rectangle") {
-    halfW = getRectWidth(t.capacity) / 2 + 20;
-    halfH = RECT_HEIGHT / 2 + 20;
-  } else if (t.shape === "sweetheart") {
-    halfW = SWEETHEART_WIDTH / 2 + 20;
-    halfH = SWEETHEART_HEIGHT / 2 + 20;
-  } else {
-    return { halfW: 70, halfH: 70 };
-  }
-  if (t.rotation === 90 || t.rotation === 270) {
-    return { halfW: halfH, halfH: halfW };
-  }
-  return { halfW, halfH };
 }

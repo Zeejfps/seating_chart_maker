@@ -3,15 +3,14 @@ import { replaceAll, reset } from "../state.svelte";
 import { clearHistory } from "../command-history.svelte";
 import {
   deleteProjectKey,
-  exportSnapshotFile,
-  importSnapshotFile,
   readCurrentProjectId,
   readManifest,
   readProject,
   writeCurrentProjectId,
   writeManifest,
   writeProject,
-} from "./project-persistence";
+} from "./storage";
+import { exportSnapshotFile, importSnapshotFile } from "./snapshot";
 import type { ManifestFile, ProjectManifestEntry } from "./types";
 import { runMigrationIfNeeded } from "./migration";
 import { uniqueName } from "./naming";

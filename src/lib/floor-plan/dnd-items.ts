@@ -1,4 +1,4 @@
-import type { Guest, Table } from "./types";
+import type { Guest, Table } from "../types";
 
 type MaybeShadow = Guest & { isDndShadowItem?: boolean };
 

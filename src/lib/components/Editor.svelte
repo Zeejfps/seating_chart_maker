@@ -1,15 +1,7 @@
 <script lang="ts">
-  import { untrack } from "svelte";
-  import { getGuests, getTables, getState } from "../state.svelte";
-  import { undo, redo, executeCommand } from "../command-history.svelte";
-  import {
-    AddGuestCommand,
-    RemoveGuestCommand,
-    RemoveTableCommand,
-    BatchCommand,
-  } from "../commands";
-  import { detectMergeChanges } from "../csv";
-  import type { ModalState } from "../types";
+  import { getTables } from "../state.svelte";
+  import { undo, redo } from "../command-history.svelte";
+  import type { ModalState, Table } from "../types";
   import TitleBar from "./TitleBar.svelte";
   import SearchBar from "./SearchBar.svelte";
   import ActionsBar from "./ActionsBar.svelte";
@@ -22,16 +14,16 @@
   import { getClipboard, setClipboard } from "../clipboard.svelte";
   import { showToast } from "../toast.svelte";
   import { pasteTableAt } from "../table-factory";
+  import { leaveProject } from "../projects/projects.svelte";
+  import { isTypingTarget, runShortcuts } from "../keyboard/shortcuts";
+  import { buildEditorShortcuts } from "../keyboard/editor-shortcuts";
+  import { useAutosave } from "../autosave.svelte";
   import {
-    leaveProject,
-    saveCurrentProject,
-  } from "../projects/projects.svelte";
-  import {
-    isTypingTarget,
-    mod,
-    runShortcuts,
-    type Shortcut,
-  } from "../keyboard/shortcuts";
+    deleteGuest,
+    deleteTable,
+    mergeGuestsFromCsv,
+    replaceGuestsFromCsv,
+  } from "../modal-commands";
 
   let selectedTableId: string | null = $state(null);
   let searchQuery = $state("");
@@ -43,40 +35,7 @@
 
   let modal: ModalState | null = $state(null);
 
-  const SAVE_DEBOUNCE_MS = 300;
-  let autosaveArmed = false;
-  let saveTimer: ReturnType<typeof setTimeout> | null = null;
-
-  function flushSave() {
-    if (saveTimer === null) return;
-    clearTimeout(saveTimer);
-    saveTimer = null;
-    saveCurrentProject(getState());
-  }
-
-  // Skip the initial load so opening a project doesn't bump updatedAt.
-  // Debounced + untracked so the manifest write can't re-trigger this effect.
-  $effect(() => {
-    getState();
-    if (!autosaveArmed) {
-      autosaveArmed = true;
-      return;
-    }
-    if (saveTimer !== null) clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      saveTimer = null;
-      untrack(() => saveCurrentProject(getState()));
-    }, SAVE_DEBOUNCE_MS);
-  });
-
-  $effect(() => {
-    const onPagehide = () => flushSave();
-    window.addEventListener("pagehide", onPagehide);
-    return () => {
-      window.removeEventListener("pagehide", onPagehide);
-      flushSave();
-    };
-  });
+  const autosave = useAutosave();
 
   function showModal(m: ModalState) {
     modal = m;
@@ -85,97 +44,11 @@
     modal = null;
   }
 
-  function confirmDeleteTable() {
-    if (modal?.type !== "delete-table") return;
-    executeCommand(new RemoveTableCommand(modal.table));
-    if (selectedTableId === modal.table.id) selectedTableId = null;
+  function handleConfirmDeleteTable(table: Table) {
+    deleteTable(table);
+    if (selectedTableId === table.id) selectedTableId = null;
     closeModal();
   }
-
-  function confirmDeleteGuest() {
-    if (modal?.type !== "delete-guest") return;
-    executeCommand(new RemoveGuestCommand(modal.guest));
-    closeModal();
-  }
-
-  function addGuest(name: string) {
-    return new AddGuestCommand({
-      id: crypto.randomUUID(),
-      name,
-      tableId: null,
-    });
-  }
-
-  function confirmCsvReplace() {
-    if (modal?.type !== "csv-import") return;
-    const cmds = [
-      ...getGuests().map((g) => new RemoveGuestCommand(g)),
-      ...modal.names.map(addGuest),
-    ];
-    if (cmds.length > 0) {
-      executeCommand(new BatchCommand(cmds, "Replace guest list"));
-    }
-    closeModal();
-  }
-
-  function confirmCsvMerge() {
-    if (modal?.type !== "csv-import") return;
-    const { toAdd, toRemove } = detectMergeChanges(getGuests(), modal.names);
-    const cmds = [
-      ...toAdd.map(addGuest),
-      ...toRemove.map((guest) => new RemoveGuestCommand(guest)),
-    ];
-    if (cmds.length > 0) {
-      executeCommand(new BatchCommand(cmds, "Merge guest list"));
-    }
-    closeModal();
-  }
-
-  const shortcuts: Shortcut[] = [
-    {
-      match: (e) => e.key === "Escape",
-      handler: () => {
-        selectedTableId = null;
-      },
-    },
-    {
-      match: (e) =>
-        (e.key === "Delete" || e.key === "Backspace") && !!selectedTableId,
-      handler: () => {
-        const table = getTables().find((t) => t.id === selectedTableId);
-        if (table) showModal({ type: "delete-table", table });
-      },
-    },
-    {
-      match: (e) => mod(e) && e.key === "f",
-      handler: (e) => {
-        e.preventDefault();
-        searchInputEl?.focus();
-      },
-    },
-    {
-      match: (e) => mod(e) && e.key === "c" && !e.shiftKey,
-      handler: copyHoveredTable,
-    },
-    {
-      match: (e) => mod(e) && e.key === "v" && !e.shiftKey,
-      handler: pasteTableAtCursor,
-    },
-    {
-      match: (e) => mod(e) && e.key === "z" && !e.shiftKey,
-      handler: (e) => {
-        e.preventDefault();
-        undo();
-      },
-    },
-    {
-      match: (e) => mod(e) && (e.key === "y" || (e.shiftKey && e.key === "Z")),
-      handler: (e) => {
-        e.preventDefault();
-        redo();
-      },
-    },
-  ];
 
   function copyHoveredTable(e: KeyboardEvent): void | false {
     if (!hoveredTableId) return false;
@@ -198,6 +71,22 @@
     pasteTableAt(clip, canvasCursor.x, canvasCursor.y);
   }
 
+  function deleteSelectedTable() {
+    const table = getTables().find((t) => t.id === selectedTableId);
+    if (table) showModal({ type: "delete-table", table });
+  }
+
+  const shortcuts = buildEditorShortcuts({
+    clearSelection: () => (selectedTableId = null),
+    deleteSelected: deleteSelectedTable,
+    focusSearch: () => searchInputEl?.focus(),
+    copyHovered: copyHoveredTable,
+    pasteAtCursor: pasteTableAtCursor,
+    undo,
+    redo,
+    hasSelection: () => !!selectedTableId,
+  });
+
   function handleKeydown(e: KeyboardEvent) {
     if (isTypingTarget(e.target)) return;
     if (modal) return;
@@ -205,7 +94,7 @@
   }
 
   function handleBack() {
-    flushSave();
+    autosave.flushSave();
     leaveProject();
   }
 </script>
@@ -238,10 +127,19 @@
 <ModalHost
   {modal}
   onclose={closeModal}
-  onCsvReplace={confirmCsvReplace}
-  onCsvMerge={confirmCsvMerge}
-  onConfirmDeleteTable={confirmDeleteTable}
-  onConfirmDeleteGuest={confirmDeleteGuest}
+  onCsvReplace={(names) => {
+    replaceGuestsFromCsv(names);
+    closeModal();
+  }}
+  onCsvMerge={(names) => {
+    mergeGuestsFromCsv(names);
+    closeModal();
+  }}
+  onConfirmDeleteTable={handleConfirmDeleteTable}
+  onConfirmDeleteGuest={(guest) => {
+    deleteGuest(guest);
+    closeModal();
+  }}
 />
 
 <style>
