@@ -19,7 +19,7 @@
   import SearchBar from "./SearchBar.svelte";
   import ActionsBar from "./ActionsBar.svelte";
   import StatsBar from "./StatsBar.svelte";
-  import UnassignedPanel from "./UnassignedPanel.svelte";
+  import GuestPanel from "./GuestPanel.svelte";
   import AddTableBar from "./AddTableBar.svelte";
   import ViewControlsBar from "./ViewControlsBar.svelte";
   import FloorPlan from "./FloorPlan.svelte";
@@ -224,7 +224,7 @@
     onsearch={(q) => (searchQuery = q)}
   />
   <ActionsBar />
-  <UnassignedPanel {searchQuery} onshowmodal={showModal} />
+  <GuestPanel {searchQuery} onshowmodal={showModal} />
   <AddTableBar />
   <StatsBar />
   <ViewControlsBar />

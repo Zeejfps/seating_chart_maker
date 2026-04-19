@@ -90,6 +90,7 @@
       items: dndItems,
       type: "guest",
       centreDraggedOnCursor: true,
+      useCursorForDetection: true,
       flipDurationMs: 0,
       morphDisabled: true,
       dragDisabled: true,

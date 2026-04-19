@@ -5,6 +5,9 @@ import { CANVAS_W, CANVAS_H } from "./grid";
 
 const COLLAPSED_KEY = "scm.unassigned.collapsed";
 const WIDTH_KEY = "scm.unassigned.width";
+const SECTION_KEY_PREFIX = "scm.guestpanel.section.";
+
+export type GuestSection = "unassigned" | "assigned";
 
 export const UNASSIGNED_MIN_WIDTH = 180;
 export const UNASSIGNED_MAX_WIDTH = 480;
@@ -101,6 +104,43 @@ export function commitUnassignedWidth(): void {
 
 export function clampZoom(v: number): number {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, v));
+}
+
+function sectionDefault(name: GuestSection): boolean {
+  return name === "unassigned";
+}
+
+function loadSectionOpen(name: GuestSection): boolean {
+  try {
+    const raw = localStorage.getItem(SECTION_KEY_PREFIX + name);
+    if (raw === null) return sectionDefault(name);
+    return raw === "1";
+  } catch {
+    return sectionDefault(name);
+  }
+}
+
+const sectionOpen: Record<GuestSection, boolean> = $state({
+  unassigned: loadSectionOpen("unassigned"),
+  assigned: loadSectionOpen("assigned"),
+});
+
+export function getSectionOpen(name: GuestSection): boolean {
+  return sectionOpen[name];
+}
+
+export function setSectionOpen(name: GuestSection, v: boolean): void {
+  if (sectionOpen[name] === v) return;
+  sectionOpen[name] = v;
+  try {
+    localStorage.setItem(SECTION_KEY_PREFIX + name, v ? "1" : "0");
+  } catch {
+    // ignore
+  }
+}
+
+export function toggleSectionOpen(name: GuestSection): void {
+  setSectionOpen(name, !sectionOpen[name]);
 }
 
 function calculateTableBounds(tables: Table[]) {
