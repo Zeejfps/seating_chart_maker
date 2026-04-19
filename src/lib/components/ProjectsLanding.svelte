@@ -13,8 +13,7 @@
   import type { ProjectManifestEntry } from "../projects/types";
   import type { ModalState } from "../types";
   import ProjectCard from "./ProjectCard.svelte";
-  import Modal from "./Modal.svelte";
-  import ErrorModal from "./ErrorModal.svelte";
+  import ModalHost from "./modals/ModalHost.svelte";
 
   let modal: ModalState | null = $state(null);
 
@@ -100,24 +99,11 @@
   {/if}
 </div>
 
-{#if modal?.type === "confirm-delete-project"}
-  {@const name = modal.entry.name}
-  <Modal title="Delete Project" onclose={closeModal}>
-    {#snippet children()}
-      <p>
-        Delete "<strong>{name}</strong>"? This cannot be undone.
-      </p>
-    {/snippet}
-    {#snippet actions()}
-      <button onclick={closeModal}>Cancel</button>
-      <button class="danger" onclick={handleDeleteConfirm}>Delete</button>
-    {/snippet}
-  </Modal>
-{/if}
-
-{#if modal?.type === "error"}
-  <ErrorModal message={modal.message} onclose={closeModal} />
-{/if}
+<ModalHost
+  {modal}
+  onclose={closeModal}
+  onConfirmDeleteProject={handleDeleteConfirm}
+/>
 
 <style>
   .landing {

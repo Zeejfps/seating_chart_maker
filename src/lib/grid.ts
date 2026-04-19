@@ -10,6 +10,14 @@ export function snapToGrid(val: number): number {
   return Math.round(val / GRID_SNAP) * GRID_SNAP;
 }
 
+/** Clamp a point to the canvas bounds. */
+export function clampToCanvas(x: number, y: number): { x: number; y: number } {
+  return {
+    x: Math.max(0, Math.min(CANVAS_W, x)),
+    y: Math.max(0, Math.min(CANVAS_H, y)),
+  };
+}
+
 /** Starting x/y for the table grid, centered on the canvas. */
 export function gridStartPosition(): { startX: number; startY: number } {
   return {

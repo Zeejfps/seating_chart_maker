@@ -2,7 +2,7 @@ import type { Table, TableShape } from "./types";
 import { getTables, getNextTableNum } from "./state.svelte";
 import { executeCommand } from "./command-history.svelte";
 import { AddTableCommand } from "./commands";
-import { CANVAS_W, CANVAS_H, findOpenSlot, snapToGrid } from "./grid";
+import { clampToCanvas, findOpenSlot, snapToGrid } from "./grid";
 import { SHAPE_DEFAULTS } from "./table-shapes";
 import type { TableClipboardSnapshot } from "./clipboard.svelte";
 
@@ -80,14 +80,15 @@ export function pasteTableAt(
   y: number,
 ): void {
   const tables = getTables();
+  const snapped = clampToCanvas(snapToGrid(x), snapToGrid(y));
   const table: Table = {
     id: crypto.randomUUID(),
     name: nameForPaste(source, tables),
     shape: source.shape,
     capacity: source.capacity,
     rotation: source.rotation,
-    x: Math.max(0, Math.min(CANVAS_W, snapToGrid(x))),
-    y: Math.max(0, Math.min(CANVAS_H, snapToGrid(y))),
+    x: snapped.x,
+    y: snapped.y,
   };
   executeCommand(new AddTableCommand(table));
 }

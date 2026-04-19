@@ -10,34 +10,118 @@ import {
   getGuests,
 } from "./state.svelte";
 
-export class AssignGuestCommand implements Command {
-  description = "Assign guest to table";
+class TablePatchCommand implements Command {
   constructor(
-    private guestId: string,
     private tableId: string,
-    private prevTableId: string | null,
+    private before: Partial<Table>,
+    private after: Partial<Table>,
+    public description: string,
   ) {}
   execute() {
-    updateGuest(this.guestId, { tableId: this.tableId });
+    updateTable(this.tableId, this.after);
   }
   undo() {
-    updateGuest(this.guestId, { tableId: this.prevTableId });
+    updateTable(this.tableId, this.before);
   }
 }
 
-export class UnassignGuestCommand implements Command {
-  description = "Unassign guest from table";
+class GuestPatchCommand implements Command {
   constructor(
     private guestId: string,
-    private prevTableId: string,
+    private before: Partial<Guest>,
+    private after: Partial<Guest>,
+    public description: string,
   ) {}
   execute() {
-    updateGuest(this.guestId, { tableId: null });
+    updateGuest(this.guestId, this.after);
   }
   undo() {
-    updateGuest(this.guestId, { tableId: this.prevTableId });
+    updateGuest(this.guestId, this.before);
   }
 }
+
+export const assignGuest = (
+  guestId: string,
+  newTableId: string,
+  prevTableId: string | null,
+): Command =>
+  new GuestPatchCommand(
+    guestId,
+    { tableId: prevTableId },
+    { tableId: newTableId },
+    "Assign guest to table",
+  );
+
+export const unassignGuest = (guestId: string, prevTableId: string): Command =>
+  new GuestPatchCommand(
+    guestId,
+    { tableId: prevTableId },
+    { tableId: null },
+    "Unassign guest from table",
+  );
+
+export const renameGuest = (
+  guestId: string,
+  oldName: string,
+  newName: string,
+): Command =>
+  new GuestPatchCommand(
+    guestId,
+    { name: oldName },
+    { name: newName },
+    "Rename guest",
+  );
+
+export const renameTable = (
+  tableId: string,
+  oldName: string,
+  newName: string,
+): Command =>
+  new TablePatchCommand(
+    tableId,
+    { name: oldName },
+    { name: newName },
+    "Rename table",
+  );
+
+export const changeTableCapacity = (
+  tableId: string,
+  oldCapacity: number,
+  newCapacity: number,
+): Command =>
+  new TablePatchCommand(
+    tableId,
+    { capacity: oldCapacity },
+    { capacity: newCapacity },
+    "Change table capacity",
+  );
+
+export const rotateTable = (
+  tableId: string,
+  oldRotation: number,
+  newRotation: number,
+): Command =>
+  new TablePatchCommand(
+    tableId,
+    { rotation: oldRotation },
+    { rotation: newRotation },
+    "Rotate table",
+  );
+
+export const moveTable = (
+  tableId: string,
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+): Command => new TablePatchCommand(tableId, from, to, "Move table");
+
+export const reorderGuestsCommand = (
+  newOrder: string[],
+  oldOrder: string[],
+): Command => ({
+  description: "Reorder guests",
+  execute: () => reorderGuests(newOrder),
+  undo: () => reorderGuests(oldOrder),
+});
 
 export class AddGuestCommand implements Command {
   description = "Add guest";
@@ -64,21 +148,6 @@ export class RemoveGuestCommand implements Command {
   }
 }
 
-export class RenameGuestCommand implements Command {
-  description = "Rename guest";
-  constructor(
-    private guestId: string,
-    private oldName: string,
-    private newName: string,
-  ) {}
-  execute() {
-    updateGuest(this.guestId, { name: this.newName });
-  }
-  undo() {
-    updateGuest(this.guestId, { name: this.oldName });
-  }
-}
-
 export class AddTableCommand implements Command {
   description = "Add table";
   constructor(private table: Table) {}
@@ -93,100 +162,24 @@ export class AddTableCommand implements Command {
 export class RemoveTableCommand implements Command {
   description = "Remove table";
   private tableSnapshot: Table;
-  private displacedGuests: { id: string; tableId: string }[] = [];
+  private displacedGuestIds: string[] = [];
   constructor(table: Table) {
     this.tableSnapshot = { ...table };
   }
   execute() {
-    this.displacedGuests = getGuests()
+    this.displacedGuestIds = getGuests()
       .filter((g) => g.tableId === this.tableSnapshot.id)
-      .map((g) => ({ id: g.id, tableId: this.tableSnapshot.id }));
-    for (const g of this.displacedGuests) {
-      updateGuest(g.id, { tableId: null });
+      .map((g) => g.id);
+    for (const id of this.displacedGuestIds) {
+      updateGuest(id, { tableId: null });
     }
     removeTable(this.tableSnapshot.id);
   }
   undo() {
     addTable({ ...this.tableSnapshot });
-    for (const g of this.displacedGuests) {
-      updateGuest(g.id, { tableId: g.tableId });
+    for (const id of this.displacedGuestIds) {
+      updateGuest(id, { tableId: this.tableSnapshot.id });
     }
-  }
-}
-
-export class RenameTableCommand implements Command {
-  description = "Rename table";
-  constructor(
-    private tableId: string,
-    private oldName: string,
-    private newName: string,
-  ) {}
-  execute() {
-    updateTable(this.tableId, { name: this.newName });
-  }
-  undo() {
-    updateTable(this.tableId, { name: this.oldName });
-  }
-}
-
-export class ChangeTableCapacityCommand implements Command {
-  description = "Change table capacity";
-  constructor(
-    private tableId: string,
-    private oldCapacity: number,
-    private newCapacity: number,
-  ) {}
-  execute() {
-    updateTable(this.tableId, { capacity: this.newCapacity });
-  }
-  undo() {
-    updateTable(this.tableId, { capacity: this.oldCapacity });
-  }
-}
-
-export class ReorderGuestsCommand implements Command {
-  description = "Reorder guests";
-  constructor(
-    private newOrder: string[],
-    private oldOrder: string[],
-  ) {}
-  execute() {
-    reorderGuests(this.newOrder);
-  }
-  undo() {
-    reorderGuests(this.oldOrder);
-  }
-}
-
-export class RotateTableCommand implements Command {
-  description = "Rotate table";
-  constructor(
-    private tableId: string,
-    private oldRotation: number,
-    private newRotation: number,
-  ) {}
-  execute() {
-    updateTable(this.tableId, { rotation: this.newRotation });
-  }
-  undo() {
-    updateTable(this.tableId, { rotation: this.oldRotation });
-  }
-}
-
-export class MoveTableCommand implements Command {
-  description = "Move table";
-  constructor(
-    private tableId: string,
-    private oldX: number,
-    private oldY: number,
-    private newX: number,
-    private newY: number,
-  ) {}
-  execute() {
-    updateTable(this.tableId, { x: this.newX, y: this.newY });
-  }
-  undo() {
-    updateTable(this.tableId, { x: this.oldX, y: this.oldY });
   }
 }
 
@@ -199,9 +192,7 @@ export class BatchCommand implements Command {
     this.description = description;
   }
   execute() {
-    for (const cmd of this.commands) {
-      cmd.execute();
-    }
+    for (const cmd of this.commands) cmd.execute();
   }
   undo() {
     for (let i = this.commands.length - 1; i >= 0; i--) {

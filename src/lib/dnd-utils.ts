@@ -1,12 +1,12 @@
 import { getGuests } from "./state.svelte";
 import { executeCommand } from "./command-history.svelte";
 import {
-  AssignGuestCommand,
+  assignGuest,
   BatchCommand,
-  ReorderGuestsCommand,
-  UnassignGuestCommand,
+  reorderGuestsCommand,
+  unassignGuest,
 } from "./commands";
-import type { Guest } from "./types";
+import type { Command, Guest } from "./types";
 
 /** Style a dragged guest element as a compact pill. */
 export function transformDraggedElement(el?: HTMLElement): void {
@@ -30,9 +30,7 @@ export function assignGuestIfChanged(
 ): boolean {
   const original = getGuests().find((g) => g.id === guestId);
   if (original && original.tableId !== newTableId) {
-    executeCommand(
-      new AssignGuestCommand(guestId, newTableId, original.tableId),
-    );
+    executeCommand(assignGuest(guestId, newTableId, original.tableId));
     return true;
   }
   return false;
@@ -44,7 +42,7 @@ export function reorderIfChanged(newItems: Guest[], oldItems: Guest[]): void {
   const oldOrder = oldItems.map((g) => g.id);
   const changed = newOrder.some((id, i) => id !== oldOrder[i]);
   if (changed) {
-    executeCommand(new ReorderGuestsCommand(newOrder, oldOrder));
+    executeCommand(reorderGuestsCommand(newOrder, oldOrder));
   }
 }
 
@@ -66,11 +64,11 @@ export const sharedGuestDndOpts = {
     seated. Returns the number of unassignments performed. */
 export function unassignGuestsFromDnd(newItems: Guest[]): number {
   const byId = new Map(getGuests().map((g) => [g.id, g]));
-  const cmds: UnassignGuestCommand[] = [];
+  const cmds: Command[] = [];
   for (const item of newItems) {
     const original = byId.get(item.id);
     if (original && original.tableId !== null) {
-      cmds.push(new UnassignGuestCommand(original.id, original.tableId));
+      cmds.push(unassignGuest(original.id, original.tableId));
     }
   }
   if (cmds.length === 1) {

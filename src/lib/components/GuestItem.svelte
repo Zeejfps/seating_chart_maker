@@ -2,7 +2,7 @@
   import type { Snippet } from "svelte";
   import type { Guest, ModalState } from "../types";
   import { executeCommand } from "../command-history.svelte";
-  import { RenameGuestCommand, RemoveGuestCommand } from "../commands";
+  import { renameGuest, RemoveGuestCommand } from "../commands";
   import InlineEdit from "./InlineEdit.svelte";
   import { Trash2 } from "lucide-svelte";
 
@@ -31,7 +31,7 @@
   let editing = $state(false);
 
   function handleRename(newName: string) {
-    executeCommand(new RenameGuestCommand(guest.id, guest.name, newName));
+    executeCommand(renameGuest(guest.id, guest.name, newName));
   }
 
   function handleRemove(e: MouseEvent) {
