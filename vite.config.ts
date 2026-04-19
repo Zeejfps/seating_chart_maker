@@ -3,7 +3,7 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: "/seating_chart_maker/",
+  base: "/",
   plugins: [
     svelte({
       onwarn(warning, handler) {
